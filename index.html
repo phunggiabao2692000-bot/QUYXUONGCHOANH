@@ -15,7 +15,7 @@
 </head>
 <body>
 <div id="info">
-  <div><b>Bản: nhà 96x64m, thang cao x3, 2 thang vòng cung</b></div>
+  <div><b>Bản: nhà 80x56m, có phòng bếp, thang cao x3</b></div>
   <div>Chế độ: <span id="mode"></span> (<kbd>V</kbd> đổi) &nbsp; Đang xem: <span id="fl"></span></div>
   <div><kbd>1</kbd> tầng trệt &nbsp; <kbd>2</kbd> tầng lầu &nbsp; <kbd>3</kbd> cả hai &nbsp; <kbd>L</kbd> tên phòng</div>
   <div><b class="c" style="background:#ffd700"></b>Chìa khóa (kho) &nbsp; <b class="c" style="background:#33ff66"></b>Pin (4) &nbsp; <b class="c" style="background:#8b4513"></b>Cửa chính</div>
@@ -31,63 +31,62 @@ const $ = id => document.getElementById(id);
 try {
 // =====================================================
 //  BẢN ĐỒ NHÀ KIỂU DINH THỰ - đơn vị mét
-//  x chạy sang phải (đông), z chạy xuống (nam). Nhà rộng 96 x dài 64.
-//  Cửa chính ở tường nam (z = 64), giữa nhà (x = 48).
+//  x chạy sang phải (đông), z chạy xuống (nam). Nhà rộng W x dài D.
+//  Cửa chính ở tường nam (z = D), giữa nhà (x = CX).
 // =====================================================
-const W = 96, D = 64, CX = 48;
-const HEIGHT_MULT = 3;                  // <<< CHỈNH Ở ĐÂY: độ cao tầng lầu gấp mấy lần bình thường (3.2m)
+const W = 80, D = 56, CX = W / 2;       // <<< CHỈNH KÍCH THƯỚC NHÀ Ở ĐÂY
+const HEIGHT_MULT = 3;                  // <<< độ cao tầng lầu gấp mấy lần bình thường (3.2m)
 const FLOOR2 = 3.2 * HEIGHT_MULT;       // độ cao mặt sàn tầng lầu (= 9.6m)
 const WT = 0.3, WHG = FLOOR2 - 0.2, WHU = 4.0, DOOR_H = 3.0; // WHG: tường tầng trệt | WHU: tường tầng lầu
 
+// CẦU THANG ĐÔI VÒNG CUNG
+//  Thang giữa: rộng 8m, từ z = D-4 đi lên phía bắc (24 bậc, lên 4.8m) tới chiếu nghỉ rộng 16m x sâu 6m
+//  2 thang cung: quay 1/4 vòng ra ngoài rồi chạy lên phía bắc (24 bậc, tới FLOOR2), đổ vào hành lang 2
+const STEPS = 24, RISE = (FLOOR2 / 2) / STEPS, RUN = 0.4, RAIL_H = 1.0;
+const FLIGHT_Z0 = D - 4, MID_W = 8;
+const LAND_Z = FLIGHT_Z0 - STEPS * RUN - 3;                    // giữa chiếu nghỉ
+const ARC_R = 8, ARC_W = 5, ARC_CZ = LAND_Z - ARC_R;           // tâm cung (z)
+const LAND_H = FLOOR2 / 2;                                     // độ cao chiếu nghỉ
+const HZ = ARC_CZ;                                             // mép bắc lỗ cầu thang = đầu hành lang tầng lầu
+const HOLE_HALF = 8 + ARC_R + ARC_W / 2;                       // nửa bề rộng lỗ cầu thang (=18.5)
+
 // Phòng: [tên, x1, z1, x2, z2, màu sàn]
 const ROOMS_G = [
-  ['HÀNH LANG 1',  0,  0, 96, 10, 0x555555],
-  ['PHÒNG KHÁCH',  0, 10, 24, 64, 0x6b3a2a],
-  ['SẢNH',        24, 10, 72, 64, 0x3a5a3a],
-  ['PHÒNG KHO',   72, 10, 96, 64, 0x8a7a4a],
+  ['HÀNH LANG 1',  0,  0, W,  8, 0x555555],
+  ['PHÒNG KHÁCH',  0,  8, 16, D, 0x6b3a2a],
+  ['SẢNH',        16,  8, W - 16, D, 0x3a5a3a],
+  ['PHÒNG KHO',   W - 16, 8, W, D, 0x8a7a4a],
 ];
 const ROOMS_U = [
-  ['PHÒNG NGỦ',        0,  0, 32, 30, 0x2f4a6b],
-  ['PHÒNG LÀM VIỆC',  32,  0, 64, 30, 0x5a4a6b],
-  ['THƯ VIỆN',        64,  0, 96, 30, 0x6b5a3a],
-  ['HÀNH LANG 2',      0, 30, 96, 39.4, 0x666666],
-  ['PHÒNG TẮM',        0, 39.4, 24, 64, 0x4a6a6a],
-  ['BAN CÔNG TÂY',    24, 39.4, 29.5, 64, 0x777777],
-  ['BAN CÔNG ĐÔNG',   66.5, 39.4, 72, 64, 0x777777],
-  ['PHÒNG TRẺ EM',    72, 39.4, 96, 64, 0x6a4a5a],
+  ['PHÒNG NGỦ',        0,  0, 26, 22, 0x2f4a6b],
+  ['PHÒNG BẾP',       26,  0, 54, 22, 0x8a5a3a],       // <<< thay cho phòng làm việc
+  ['THƯ VIỆN',        54,  0, W, 22, 0x6b5a3a],
+  ['HÀNH LANG 2',      0, 22, W, HZ, 0x666666],
+  ['PHÒNG TẮM',        0, HZ, 16, D, 0x4a6a6a],
+  ['BAN CÔNG TÂY',    16, HZ, CX - HOLE_HALF, D, 0x777777],
+  ['BAN CÔNG ĐÔNG',   CX + HOLE_HALF, HZ, W - 16, D, 0x777777],
+  ['PHÒNG TRẺ EM',    W - 16, HZ, W, D, 0x6a4a5a],
 ];
 
 // Tường: [hướng, từ, đến, vị trí cố định, [cửa [bắt đầu, kết thúc]]]  ('x' = chạy ngang, 'z' = chạy dọc; cửa xếp từ nhỏ đến lớn)
 const WALLS_G = [
-  ['x', 0, 96, 0, []], ['x', 0, 96, 64, [[46, 50]]],            // tường nam chừa cửa chính
-  ['z', 0, 64, 0, []], ['z', 0, 64, 96, []],
-  ['x', 0, 96, 10, [[8, 11], [40, 56], [84, 87]]],              // hành lang 1 -> khách | sảnh (cổng vòm) | kho
-  ['z', 10, 64, 24, [[34, 37]]], ['z', 10, 64, 72, [[34, 37]]], // khách <-> sảnh <-> kho
+  ['x', 0, W, 0, []], ['x', 0, W, D, [[CX - 2, CX + 2]]],          // tường nam chừa cửa chính
+  ['z', 0, D, 0, []], ['z', 0, D, W, []],
+  ['x', 0, W, 8, [[6, 9], [CX - 8, CX + 8], [W - 9, W - 6]]],       // hành lang 1 -> khách | sảnh (cổng vòm) | kho
+  ['z', 8, D, 16, [[30, 33]]], ['z', 8, D, W - 16, [[30, 33]]],    // khách <-> sảnh <-> kho
 ];
 const WALLS_U = [
-  ['x', 0, 96, 0, []], ['x', 0, 96, 64, []],
-  ['z', 0, 64, 0, []], ['z', 0, 64, 96, []],
-  ['x', 0, 96, 30, [[14, 17], [46, 49], [78, 81]]],             // hành lang 2 -> ngủ | làm việc | thư viện
-  ['z', 0, 30, 32, []], ['z', 0, 30, 64, []],
-  ['x', 0, 24, 39.4, [[10, 13]]], ['x', 72, 96, 39.4, [[82, 85]]], // hành lang 2 -> tắm | trẻ em
-  ['z', 39.4, 64, 24, []], ['z', 39.4, 64, 72, []],
+  ['x', 0, W, 0, []], ['x', 0, W, D, []],
+  ['z', 0, D, 0, []], ['z', 0, D, W, []],
+  ['x', 0, W, 22, [[11.5, 14.5], [38.5, 41.5], [65.5, 68.5]]],      // hành lang 2 -> ngủ | bếp | thư viện
+  ['z', 0, 22, 26, []], ['z', 0, 22, 54, []],
+  ['x', 0, 16, HZ, [[6.5, 9.5]]], ['x', W - 16, W, HZ, [[W - 9.5, W - 6.5]]], // hành lang 2 -> tắm | trẻ em
+  ['z', HZ, D, 16, []], ['z', HZ, D, W - 16, []],
 ];
 
-// CẦU THANG ĐÔI VÒNG CUNG (tất cả đơn vị mét)
-//  Thang giữa: x44..52, từ z60 đi lên phía bắc tới z50.4 (24 bậc, lên 4.8m)
-//  Chiếu nghỉ: x40..56, z44.4..50.4, cao 4.8m
-//  2 thang cung: tâm (40,39.4) và (56,39.4), bán kính 8, quay 1/4 vòng ra ngoài rồi chạy lên phía bắc (24 bậc, tới 9.6m)
-//  Đỉnh 2 thang ở x=32 và x=64, z=39.4 -> đổ vào hành lang 2
-//  Lỗ trên sàn lầu: x29.5..66.5, z39.4..64
-const STEPS = 24, RISE = (FLOOR2 / 2) / STEPS, RUN = 0.4, RAIL_H = 1.0;
-const FLIGHT_Z0 = 60, MID_W = 8;
-const LAND_Z = FLIGHT_Z0 - STEPS * RUN - 3;                    // giữa chiếu nghỉ (z47.4)
-const ARC_R = 8, ARC_W = 5, ARC_CZ = LAND_Z - ARC_R;           // tâm cung z39.4
-const LAND_H = FLOOR2 / 2;                                     // độ cao chiếu nghỉ
-
-const KEY_POS  = [84, 36];                                     // chìa khóa (phòng kho)
-const BAT_POS  = [[12, 30, 0], [48, 5, 0], [84, 56, 0], [12, 15, FLOOR2]]; // [x, z, độ cao sàn]
-const EXIT_POS = [48, 64];                                     // cửa chính
+const KEY_POS  = [W - 8, 30];                                      // chìa khóa (phòng kho)
+const BAT_POS  = [[8, 24, 0], [CX, 4, 0], [W - 8, 48, 0], [8, 12, FLOOR2]]; // [x, z, độ cao sàn]
+const EXIT_POS = [CX, D];                                          // cửa chính
 // =====================================================
 //  HẾT PHẦN BẢN ĐỒ
 // =====================================================
@@ -102,169 +101,4 @@ addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; cam
 const amb = new THREE.AmbientLight(0xffffff, 0.85); scene.add(amb);
 const sun = new THREE.DirectionalLight(0xffffff, 0.6); sun.position.set(40, 120, 20); scene.add(sun);
 
-const G = new THREE.Group(), U = new THREE.Group(), B = new THREE.Group(); // tầng trệt, tầng lầu, chung
-scene.add(G, U, B);
-const MAT = (c, r = .9) => new THREE.MeshStandardMaterial({ color: c, roughness: r });
-const WALL = MAT(0x7a6a5e), RAILMAT = MAT(0xaa8844, .6), CARPET = MAT(0x8b1a1a, 1);
-
-function box(p, x, y, z, w, h, d, mat) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-  m.position.set(x, y, z); p.add(m); return m;
-}
-function wall(p, [axis, a, b, f, doors], y0, wh) {
-  const segs = []; let pos = a;
-  doors.forEach(([s, e]) => { if (s > pos) segs.push([pos, s]); pos = e; });
-  if (pos < b) segs.push([pos, b]);
-  const put = (s, e, yy, hh) => axis === 'x'
-    ? box(p, (s + e) / 2, yy, f, e - s, hh, WT, WALL)
-    : box(p, f, yy, (s + e) / 2, WT, hh, e - s, WALL);
-  segs.forEach(([s, e]) => put(s, e, y0 + wh / 2, wh));
-  doors.forEach(([s, e]) => put(s, e, y0 + DOOR_H + (wh - DOOR_H) / 2, wh - DOOR_H));
-}
-function label(p, text, x, y, z, w = 6) {
-  const c = document.createElement('canvas'); c.width = 320; c.height = 64;
-  const g = c.getContext('2d'); g.fillStyle = 'rgba(0,0,0,.65)'; g.fillRect(0, 0, 320, 64);
-  g.fillStyle = '#fff'; g.font = 'bold 28px sans-serif'; g.textAlign = 'center'; g.fillText(text, 160, 42);
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
-  s.scale.set(w, w / 5, 1); s.position.set(x, y, z); s.userData.label = true; p.add(s);
-}
-
-// Sàn từng phòng + tên + tường
-const rooms = (p, list, y0, up) => list.forEach(([n, x1, z1, x2, z2, col]) => {
-  box(p, (x1 + x2) / 2, y0 + .02, (z1 + z2) / 2, x2 - x1, .04, z2 - z1, MAT(col, 1));
-  label(p, n, (x1 + x2) / 2, y0 + (up ? 2.4 : 5), n === 'SẢNH' ? 22 : (z1 + z2) / 2, Math.min(7, (x2 - x1) * .8));
-});
-rooms(G, ROOMS_G, 0, false); WALLS_G.forEach(w => wall(G, w, 0, WHG));
-rooms(U, ROOMS_U, FLOOR2, true); WALLS_U.forEach(w => wall(U, w, FLOOR2, WHU));
-
-// Sàn tầng lầu: chừa lỗ x29.5..66.5, z39.4..64 cho cầu thang
-const SLAB = MAT(0x4a4038, 1);
-const slab = (x1, z1, x2, z2) => box(U, (x1 + x2) / 2, FLOOR2 - .1, (z1 + z2) / 2, x2 - x1, .2, z2 - z1, SLAB);
-slab(0, 0, W, 39.4); slab(0, 39.4, 29.5, D); slab(66.5, 39.4, W, D);
-
-// Lan can: đoạn thẳng (x1,z1)-(x2,z2) đặt trên độ cao y0
-const rail = (p, x1, z1, x2, z2, y0) => box(p, (x1 + x2) / 2, y0 + RAIL_H / 2, (z1 + z2) / 2, Math.max(.1, x2 - x1), RAIL_H, Math.max(.1, z2 - z1), RAILMAT);
-// Lan can tầng lầu nhìn xuống sảnh: giữa 2 thang (x34.5..61.5) và dọc hai ban công
-rail(U, 34.5, 39.4, 61.5, 39.4, FLOOR2);
-rail(U, 29.5, 39.4, 29.5, D, FLOOR2); rail(U, 66.5, 39.4, 66.5, D, FLOOR2);
-
-// Thang thẳng đi về phía bắc: bắt đầu (x0,z0), rộng w, n bậc, độ cao nền base
-function flight(x0, z0, w, n, base, color, carpet) {
-  const m = MAT(color, .8);
-  for (let i = 0; i < n; i++) {
-    const top = base + (i + 1) * RISE, cz = z0 - (i + .5) * RUN;
-    box(B, x0, top / 2, cz, w, top, RUN, m);
-    if (carpet) box(B, x0, top + .02, cz, w * .6, .04, RUN, CARPET);
-    [-1, 1].forEach(s => box(B, x0 + s * (w / 2 - .05), top + RAIL_H / 2, cz, .1, RAIL_H, RUN, RAILMAT));
-  }
-}
-// Thang vòng cung: tâm (cx,cz), bán kính r, góc a0 -> a1, rộng w, độ cao nền base; tay vịn đặc 2 mép
-function arc(cx, cz, r, a0, a1, n, w, base, color) {
-  const m = MAT(color, .8), da = (a1 - a0) / n, len = r * Math.abs(da) * 1.04;
-  for (let i = 0; i < n; i++) {
-    const a = a0 + (i + .5) * da, top = base + (i + 1) * RISE, ca = Math.cos(a), sa = Math.sin(a);
-    const t = box(B, cx + r * ca, top / 2, cz + r * sa, w, top, len, m); t.rotation.y = -a;
-    const c = box(B, cx + r * ca, top + .02, cz + r * sa, w * .6, .04, len, CARPET); c.rotation.y = -a;
-    [-1, 1].forEach(s => {
-      const o = r + s * (w / 2 - .05);
-      const rb = box(B, cx + o * ca, top + RAIL_H / 2, cz + o * sa, .1, RAIL_H, len, RAILMAT); rb.rotation.y = -a;
-    });
-  }
-}
-flight(CX, FLIGHT_Z0, MID_W, STEPS, 0, 0xff9933, true);                    // thang giữa, thảm đỏ
-box(B, CX, LAND_H / 2, LAND_Z, 16, LAND_H, 6, MAT(0xff9933, .8));           // chiếu nghỉ x40..56
-box(B, CX, LAND_H + .02, LAND_Z, 8, .04, 6, CARPET);
-arc(CX - 8, ARC_CZ, ARC_R, Math.PI / 2, Math.PI, STEPS, ARC_W, LAND_H, 0x3399ff); // thang cung bên TÂY
-arc(CX + 8, ARC_CZ, ARC_R, Math.PI / 2, 0, STEPS, ARC_W, LAND_H, 0x3399ff);       // thang cung bên ĐÔNG
-// Lan can chiếu nghỉ: mép bắc kín, mép nam chừa chỗ thang giữa (x44..52)
-rail(B, 40, LAND_Z - 3, 56, LAND_Z - 3, LAND_H);
-rail(B, 40, LAND_Z + 3, 44, LAND_Z + 3, LAND_H); rail(B, 52, LAND_Z + 3, 56, LAND_Z + 3, LAND_H);
-label(B, 'CẦU THANG ĐÔI', CX, FLOOR2 + 2, LAND_Z, 5);
-
-// Cửa chính (thoát hiểm), chìa khóa, pin
-box(G, EXIT_POS[0], DOOR_H / 2, EXIT_POS[1], 4, DOOR_H, .25, MAT(0x8b4513));
-const key = new THREE.Mesh(new THREE.TorusGeometry(.5, .15, 8, 16), new THREE.MeshBasicMaterial({ color: 0xffd700 }));
-key.position.set(KEY_POS[0], 1, KEY_POS[1]); key.rotation.x = Math.PI / 2; G.add(key);
-BAT_POS.forEach(([x, z, y]) => box(y ? U : G, x, y + .6, z, .5, .8, .5, new THREE.MeshBasicMaterial({ color: 0x33ff66 })));
-
-function showFloors(n) { G.visible = n !== 2; U.visible = n !== 1; $('fl').innerText = ['', 'TẦNG TRỆT', 'TẦNG LẦU', 'CẢ HAI'][n]; }
-showFloors(3);
-let labelsOn = true;
-
-// =====================================================
-//  CAMERA: nhìn từ trên xuống  /  bay tự do
-// =====================================================
-const keys = {}; let tx = 48, tz = 32, h = 130, bright = true;
-let mode = 'top', yaw = 0, pitch = -0.9, speed = 16, drag = false;
-const fpos = new THREE.Vector3(), dom = renderer.domElement;
-const HELP = {
-  top: '<kbd>W A S D</kbd> kéo bản đồ &nbsp; <kbd>Q</kbd>/<kbd>E</kbd> phóng to / thu nhỏ',
-  fly: '<kbd>Bấm vào màn hình</kbd> khóa chuột (<kbd>Esc</kbd> nhả) hoặc giữ chuột để xoay<br>' +
-       '<kbd>W A S D</kbd> bay &nbsp; <kbd>Space</kbd> lên &nbsp; <kbd>Shift</kbd> xuống &nbsp; <kbd>Z</kbd>/<kbd>X</kbd> chậm / nhanh<br>' +
-       '<kbd>H</kbd> cửa chính nhìn lên cầu thang &nbsp; <kbd>G</kbd> hành lang 2 nhìn xuống sảnh &nbsp; <kbd>Y</kbd> hành lang 2 (đầu tây) &nbsp; <kbd>T</kbd> hành lang 1'
-};
-function setMode(m) {
-  mode = m;
-  if (m === 'fly') { camera.up.set(0, 1, 0); camera.fov = 70; camera.rotation.order = 'YXZ'; fpos.set(tx, 55, tz + 50); yaw = 0; pitch = -0.9; }
-  else { camera.up.set(0, 0, -1); camera.fov = 50; if (document.pointerLockElement) document.exitPointerLock(); }
-  camera.updateProjectionMatrix();
-  $('mode').innerText = m === 'fly' ? 'BAY TỰ DO' : 'NHÌN TỪ TRÊN';
-  $('help').innerHTML = HELP[m];
-}
-setMode('top');
-
-dom.addEventListener('click', () => { if (mode === 'fly' && !document.pointerLockElement) dom.requestPointerLock(); });
-dom.addEventListener('mousedown', () => drag = true);
-addEventListener('mouseup', () => drag = false);
-addEventListener('mousemove', e => {
-  if (mode !== 'fly' || !(document.pointerLockElement === dom || drag)) return;
-  yaw -= e.movementX * .003; pitch = Math.max(-1.55, Math.min(1.55, pitch - e.movementY * .003));
-});
-addEventListener('keydown', e => {
-  keys[e.code] = true;
-  if (e.code === 'KeyV') setMode(mode === 'top' ? 'fly' : 'top');
-  if (e.code === 'Digit1') showFloors(1);
-  if (e.code === 'Digit2') showFloors(2);
-  if (e.code === 'Digit3') showFloors(3);
-  if (e.code === 'KeyL') { labelsOn = !labelsOn; scene.traverse(o => { if (o.userData.label) o.visible = labelsOn; }); }
-  if (e.code === 'KeyF') { bright = !bright; amb.intensity = bright ? .85 : .15; sun.intensity = bright ? .6 : 0; scene.background.set(bright ? 0x101010 : 0x030000); }
-  if (mode === 'fly') {
-    if (e.code === 'KeyT') { fpos.set(2, 1.6, 5); yaw = -Math.PI / 2; pitch = 0; showFloors(1); }
-    if (e.code === 'KeyH') { fpos.set(CX, 1.6, 62.5); yaw = 0; pitch = .45; showFloors(3); }
-    if (e.code === 'KeyG') { fpos.set(CX, FLOOR2 + 1.6, 36); yaw = Math.PI; pitch = -.35; showFloors(3); }
-    if (e.code === 'KeyY') { fpos.set(2, FLOOR2 + 1.6, 35); yaw = -Math.PI / 2; pitch = 0; showFloors(2); }
-    if (e.code === 'KeyZ') speed = Math.max(2, speed / 1.4);
-    if (e.code === 'KeyX') speed = Math.min(120, speed * 1.4);
-    if (e.code === 'Space') e.preventDefault();
-  }
-});
-addEventListener('keyup', e => keys[e.code] = false);
-
-const clock = new THREE.Clock();
-(function loop() {
-  requestAnimationFrame(loop);
-  const dt = Math.min(clock.getDelta(), .05);
-  if (mode === 'top') {
-    const s = h * .012;
-    if (keys.KeyW) tz -= s; if (keys.KeyS) tz += s;
-    if (keys.KeyA) tx -= s; if (keys.KeyD) tx += s;
-    if (keys.KeyQ) h = Math.max(8, h - 1); if (keys.KeyE) h = Math.min(260, h + 1);
-    camera.position.set(tx, h, tz); camera.lookAt(tx, 0, tz);
-  } else {
-    const cp = Math.cos(pitch), sp = Math.sin(pitch), sy = Math.sin(yaw), cy = Math.cos(yaw);
-    const f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), r = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
-    const u = (keys.Space ? 1 : 0) - (keys.ShiftLeft || keys.ShiftRight ? 1 : 0);
-    fpos.x += (-sy * cp * f + cy * r) * speed * dt;
-    fpos.y += (sp * f + u) * speed * dt;
-    fpos.z += (-cy * cp * f - sy * r) * speed * dt;
-    fpos.y = Math.max(.3, fpos.y);
-    camera.position.copy(fpos); camera.rotation.set(pitch, yaw, 0);
-  }
-  renderer.render(scene, camera);
-})();
-} catch (e) {
-  const el = $('err'); el.innerText = 'Lỗi: ' + e.message; el.style.display = 'block';
-}
-</script>
-</body>
-</html>
+const G = new
