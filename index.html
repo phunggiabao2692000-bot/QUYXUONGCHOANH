@@ -37,12 +37,13 @@ addEventListener('error', function (e) {
 (function () {
 const $ = id => document.getElementById(id);
 const errs = [];
+  $('st').textContent = 'A: code đã bắt đầu chạy';
 function fail(name, e) {
   errs.push(name + ': ' + e.message);
   const b = $('err'); b.textContent = 'Lỗi ở bước [' + errs.join(' | ') + ']'; b.style.display = 'block';
   $('st').textContent = 'CÓ LỖI'; $('st').style.color = '#f66'; console.error(name, e);
 }
-const step = (name, fn) => { try { fn(); } catch (e) { fail(name, e); } };
+const step = (name, fn) => { try { fn(); $('st').textContent = 'Đã xong bước: ' + name; } catch (e) { fail(name, e); } };
 
 function main() {
 try {
@@ -51,6 +52,7 @@ try {
 //  Cửa chính ở tường nam (z = D), giữa nhà (x = CX).
 // =====================================================
 const W = 80, D = 56, CX = W / 2;       // <<< kích thước nhà
+  $('st').textContent = 'B: đã vào hàm dựng nhà (THREE: ' + typeof THREE + ')';
 const HEIGHT_MULT = 3;                  // <<< độ cao tầng lầu gấp mấy lần 3.2m
 const FLOOR2 = 3.2 * HEIGHT_MULT;       // mặt sàn tầng lầu (9.6m)
 const WT = 0.3, WHG = FLOOR2 - 0.2, WHU = 4.0, DOOR_H = 3.0;
