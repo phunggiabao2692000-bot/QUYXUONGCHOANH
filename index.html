@@ -6,10 +6,9 @@
 <title>Nhà kinh dị - xem bản đồ</title>
 <style>
 body{margin:0;overflow:hidden;background:#000;font-family:'Segoe UI',Arial,sans-serif;color:#eee}
-#info{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.82);border:1px solid #888;padding:8px 12px;font-size:13px;line-height:1.7;max-width:340px;z-index:5}
+#info{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.82);border:1px solid #666;padding:8px 12px;font-size:13px;line-height:1.7;max-width:340px;z-index:5}
 kbd{background:#222;border:1px solid #777;border-radius:3px;padding:0 5px;font-size:12px}
-#st{color:#9f9}
-#mode,#fl{color:#fff;font-weight:700}
+#st{color:#9f9}#mode,#fl{color:#fff;font-weight:700}
 #err{display:none;position:fixed;left:0;right:0;top:0;z-index:99;background:#b00;color:#fff;padding:10px 14px;font-size:15px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -17,59 +16,57 @@ kbd{background:#222;border:1px solid #777;border-radius:3px;padding:0 5px;font-s
 <body>
 <div id="err"></div>
 <div id="info">
-  <div><b>Nhà 80x56m, đen trắng, tầng lầu cao 9.6m</b></div>
+  <div><b>Nhà 80x56m, đen trắng u tối, cầu thang ở giữa</b></div>
   <div id="st">Đang chờ...</div>
   <div>Chế độ: <span id="mode"></span> (<kbd>V</kbd> đổi) &nbsp; Xem: <span id="fl"></span></div>
-  <div><kbd>1</kbd> tầng trệt &nbsp; <kbd>2</kbd> tầng lầu &nbsp; <kbd>3</kbd> cả hai &nbsp; <kbd>L</kbd> tên phòng &nbsp; <kbd>F</kbd> sáng/tối</div>
+  <div><kbd>1</kbd> tầng trệt &nbsp; <kbd>2</kbd> tầng lầu &nbsp; <kbd>3</kbd> cả hai &nbsp; <kbd>L</kbd> tên phòng &nbsp; <kbd>F</kbd> sáng/tối &nbsp; <kbd>K</kbd> độ phân giải</div>
   <div id="help"></div>
 </div>
-
 <script>
 var $ = function (i) { return document.getElementById(i); };
 function st(t) { $('st').textContent = t; }
 function showErr(m) { var b = $('err'); b.textContent = m; b.style.display = 'block'; }
 addEventListener('error', function (e) { showErr('Lỗi: ' + e.message + ' (dòng ' + e.lineno + ')'); });
 st('1. Trang đã chạy, đang kiểm tra thư viện 3D...');
-
 function start() {
   st('2. Có thư viện 3D, đang dựng nhà...');
-  try { build(); st('3. Dựng xong, không có lỗi'); }
-  catch (e) { showErr('Lỗi khi dựng: ' + e.message); }
+  try { build(); st('3. Dựng xong, không có lỗi'); } catch (e) { showErr('Lỗi khi dựng: ' + e.message); }
 }
 if (window.THREE) start();
 else {
   var s = document.createElement('script');
   s.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js';
-  s.onload = start;
-  s.onerror = function () { showErr('Không tải được Three.js. Hãy kiểm tra mạng.'); };
+  s.onload = start; s.onerror = function () { showErr('Không tải được Three.js. Hãy kiểm tra mạng.'); };
   document.head.appendChild(s);
 }
 
 function build() {
 // ================= BẢN ĐỒ (mét). x sang phải, z xuống. Cửa chính ở z = D =================
-const W = 80, D = 56, CX = W / 2;          // kích thước nhà
-const F2 = 9.6;                            // độ cao sàn tầng lầu (3.2 x 3)
-const WT = 0.3, WHG = F2 - 0.2, WHU = 4, DH = 3;
-const STEPS = 24, RISE = (F2 / 2) / STEPS, RUN = 0.4, RH = 1;   // cầu thang
-const FZ0 = D - 4, MW = 8, LZ = FZ0 - STEPS * RUN - 3, LH = F2 / 2;
-const AR = 8, AW = 5, HZ = LZ - AR, HH = 8 + AR + AW / 2;       // thang cung; HZ = mép bắc lỗ thang
+const W = 80, D = 56, CX = W / 2, F2 = 9.6;            // F2: độ cao sàn tầng lầu
+const WT = 0.3, WHG = F2 - 0.2, WHU = 4, DH = 3, NZ = 14; // NZ: độ sâu các phòng phía bắc tầng lầu
+// Cầu thang đôi nằm CHÍNH GIỮA nhà: thang giữa -> chiếu nghỉ -> 2 thang vòng cung ra 2 bên
+const STEPS = 24, RISE = (F2 / 2) / STEPS, RUN = 0.3, RH = 1, LD = 4, MW = 8, AR = 6, AW = 5;
+const TOT = STEPS * RUN + LD / 2 + AR;                  // chiều dài cả cụm thang
+const FZ0 = D / 2 + TOT / 2, HZ = D / 2 - TOT / 2;      // chân thang (nam) và mép bắc lỗ thang
+const LZ = FZ0 - STEPS * RUN - LD / 2, LH = F2 / 2;     // tâm chiếu nghỉ, độ cao chiếu nghỉ
+const HH = 8 + AR + AW / 2, IN = 8 + AR - AW / 2;       // nửa bề rộng lỗ thang, mép trong 2 thang cung
 
-// [tên, x1, z1, x2, z2, độ sáng sàn, lát caro?]
+// [tên, x1, z1, x2, z2, màu sàn, lát caro?]
 const RG = [
-  ['HÀNH LANG 1', 0, 0, W, 8, 0x777777, 1],
-  ['PHÒNG KHÁCH', 0, 8, 16, D, 0x3a3a3a, 0],
+  ['HÀNH LANG 1', 0, 0, W, 8, 0x4a4a4a, 0],
+  ['PHÒNG KHÁCH', 0, 8, 16, D, 0x2a2a2a, 0],
   ['SẢNH', 16, 8, W - 16, D, 0x777777, 1],
-  ['PHÒNG KHO', W - 16, 8, W, D, 0x2a2a2a, 0]
+  ['PHÒNG KHO', W - 16, 8, W, D, 0x202020, 0]
 ];
 const RU = [
-  ['PHÒNG NGỦ', 0, 0, 26, 22, 0x333333, 0],
-  ['PHÒNG BẾP', 26, 0, 54, 22, 0x777777, 1],
-  ['THƯ VIỆN', 54, 0, W, 22, 0x2a2a2a, 0],
-  ['HÀNH LANG 2', 0, 22, W, HZ, 0x555555, 0],
+  ['PHÒNG NGỦ', 0, 0, 26, NZ, 0x2a2a2a, 0],
+  ['PHÒNG BẾP', 26, 0, 54, NZ, 0x777777, 1],
+  ['THƯ VIỆN', 54, 0, W, NZ, 0x202020, 0],
+  ['HÀNH LANG 2', 0, NZ, W, HZ, 0x3a3a3a, 0],
   ['PHÒNG TẮM', 0, HZ, 16, D, 0x777777, 1],
-  ['BAN CÔNG TÂY', 16, HZ, CX - HH, D, 0x444444, 0],
-  ['BAN CÔNG ĐÔNG', CX + HH, HZ, W - 16, D, 0x444444, 0],
-  ['PHÒNG TRẺ EM', W - 16, HZ, W, D, 0x333333, 0]
+  ['BAN CÔNG TÂY', 16, HZ, CX - HH, D, 0x333333, 0],
+  ['BAN CÔNG ĐÔNG', CX + HH, HZ, W - 16, D, 0x333333, 0],
+  ['PHÒNG TRẺ EM', W - 16, HZ, W, D, 0x2a2a2a, 0]
 ];
 // Tường: [hướng, từ, đến, vị trí cố định, [cửa [bắt đầu, kết thúc]]]  ('x' chạy ngang, 'z' chạy dọc)
 const WG = [
@@ -81,37 +78,66 @@ const WG = [
 const WU = [
   ['x', 0, W, 0, []], ['x', 0, W, D, []],
   ['z', 0, D, 0, []], ['z', 0, D, W, []],
-  ['x', 0, W, 22, [[11.5, 14.5], [38.5, 41.5], [65.5, 68.5]]],
-  ['z', 0, 22, 26, []], ['z', 0, 22, 54, []],
+  ['x', 0, W, NZ, [[11.5, 14.5], [38.5, 41.5], [65.5, 68.5]]],
+  ['z', 0, NZ, 26, []], ['z', 0, NZ, 54, []],
   ['x', 0, 16, HZ, [[6.5, 9.5]]], ['x', W - 16, W, HZ, [[W - 9.5, W - 6.5]]],
   ['z', HZ, D, 16, []], ['z', HZ, D, W - 16, []]
 ];
 const KEY = [W - 8, 30], EXIT = [CX, D];
-const BAT = [[8, 24, 0], [CX, 4, 0], [W - 8, 48, 0], [8, 12, F2]];   // [x, z, độ cao sàn]
+const BAT = [[8, 24, 0], [CX, 4, 0], [W - 8, 48, 0], [8, 8, F2]];   // [x, z, độ cao sàn]
 // ==========================================================================================
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050505);
+scene.background = new THREE.Color(0x030303);
+scene.fog = new THREE.FogExp2(0x040404, 0.006);
 const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 800);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(innerWidth, innerHeight);
+const RATIOS = [1, 2, 3]; let ri = 1;
+function setRes() { renderer.setPixelRatio(RATIOS[ri]); renderer.setSize(innerWidth, innerHeight); }
+setRes();
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.8;
+renderer.outputEncoding = THREE.sRGBEncoding;
 document.body.appendChild(renderer.domElement);
-addEventListener('resize', function () { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
-const amb = new THREE.AmbientLight(0xffffff, 0.75); scene.add(amb);
-const sun = new THREE.DirectionalLight(0xffffff, 0.6); sun.position.set(40, 120, 20); scene.add(sun);
+addEventListener('resize', function () { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); setRes(); });
+
+// Ánh sáng u tối: môi trường yếu + ánh trăng + đèn vàng ở sảnh + đèn xanh lạnh ở các phòng
+const amb = new THREE.AmbientLight(0xffffff, 0.22); scene.add(amb);
+const hemi = new THREE.HemisphereLight(0x8890a0, 0x1a1010, 0.25); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xaab4ff, 0.5); sun.position.set(30, 110, 40);
+sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0004;
+const sc = sun.shadow.camera; sc.left = -70; sc.right = 70; sc.top = 70; sc.bottom = -70; sc.near = 1; sc.far = 300;
+scene.add(sun);
+const PL = [];
+function pl(x, y, z, c, i, d) { const l = new THREE.PointLight(c, i, d, 1.5); l.position.set(x, y, z); scene.add(l); PL.push(l); return l; }
+const chand = pl(CX, 7, 46, 0xffc880, 1.5, 48);
+pl(CX, 4, 4, 0xbcc8ff, 0.5, 26); pl(8, 4, 32, 0xbcc8ff, 0.5, 24); pl(W - 8, 4, 32, 0xbcc8ff, 0.5, 24);
+pl(13, F2 + 3, 7, 0xbcc8ff, 0.6, 24); pl(40, F2 + 3, 7, 0xffd9b0, 0.7, 26); pl(67, F2 + 3, 7, 0xbcc8ff, 0.6, 24); pl(CX, F2 + 3, 17, 0xbcc8ff, 0.6, 30);
+
 const G = new THREE.Group(), U = new THREE.Group(), B = new THREE.Group();
 scene.add(G); scene.add(U); scene.add(B);
+const AN = renderer.capabilities.getMaxAnisotropy();
 
-const M = function (c, r) { return new THREE.MeshStandardMaterial({ color: c, roughness: r === undefined ? 0.9 : r }); };
-const WALL = M(0xcfcfcf), RAIL = M(0x333333, 0.6), CARPET = M(0x0a0a0a, 1), STEP1 = M(0xf0f0f0, 0.8), STEP2 = M(0xbbbbbb, 0.8);
-function box(p, x, y, z, w, h, d, m) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); p.add(o); return o; }
-function tile(w, d) {   // gạch caro đen trắng
-  const c = document.createElement('canvas'); c.width = c.height = 64;
-  const g = c.getContext('2d'); g.fillStyle = '#e8e8e8'; g.fillRect(0, 0, 64, 64);
-  g.fillStyle = '#111'; g.fillRect(0, 0, 32, 32); g.fillRect(32, 32, 32, 32);
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w / 4, d / 4);
-  return new THREE.MeshStandardMaterial({ map: t, roughness: 1 });
+// Texture 512px có nhiễu, vết ố; tile = true thì vẽ caro đen trắng có ron gạch
+function tex(base, rep1, rep2, tile) {
+  const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d'); g.fillStyle = base; g.fillRect(0, 0, S, S);
+  if (tile) {
+    g.fillStyle = '#c4c4c4'; g.fillRect(0, 0, S, S);
+    g.fillStyle = '#0d0d0d'; g.fillRect(0, 0, S / 2, S / 2); g.fillRect(S / 2, S / 2, S / 2, S / 2);
+    g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 3; g.strokeRect(0, 0, S / 2, S / 2); g.strokeRect(S / 2, 0, S / 2, S / 2); g.strokeRect(0, S / 2, S / 2, S / 2); g.strokeRect(S / 2, S / 2, S / 2, S / 2);
+  }
+  for (let i = 0; i < 1800; i++) { const v = Math.random() < 0.7 ? 0 : 255; g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',' + Math.random() * 0.12 + ')'; g.fillRect(Math.random() * S, Math.random() * S, Math.random() * 28 + 1, Math.random() * 28 + 1); }
+  for (let i = 0; i < 7; i++) { const x = Math.random() * S, y = Math.random() * S, r = 40 + Math.random() * 90, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(0,0,0,.4)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, 2 * r, 2 * r); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep1, rep2);
+  t.encoding = THREE.sRGBEncoding; t.anisotropy = AN; return t;
 }
+const SM = function (map, rough, bump) { return new THREE.MeshStandardMaterial({ map: map, bumpMap: map, bumpScale: bump, roughness: rough, metalness: 0.05 }); };
+const M = function (c, r) { return new THREE.MeshStandardMaterial({ color: c, roughness: r === undefined ? 0.8 : r }); };
+const WALL = SM(tex('#6b6966', 1, 1, false), 0.95, 1.2), FLOORTEX = tex('#2a2826', 1, 1, false);
+const RAIL = M(0x1a1a1a, 0.5), CAP = M(0xa8a8a8, 0.4), STW = M(0xcfcfcf, 0.6), STB = M(0x101010, 0.5), SL = M(0x181818, 1);
+
+function box(p, x, y, z, w, h, d, m) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; p.add(o); return o; }
 function wall(p, w, y0, wh) {
   const ax = w[0], a = w[1], b = w[2], f = w[3], ds = w[4], segs = []; let pos = a;
   ds.forEach(function (d) { if (d[0] > pos) segs.push([pos, d[0]]); pos = d[1]; });
@@ -123,61 +149,64 @@ function wall(p, w, y0, wh) {
 function label(p, text, x, y, z, w) {
   const c = document.createElement('canvas'); c.width = 320; c.height = 64;
   const g = c.getContext('2d'); g.fillStyle = 'rgba(0,0,0,.75)'; g.fillRect(0, 0, 320, 64);
-  g.fillStyle = '#fff'; g.font = 'bold 28px sans-serif'; g.textAlign = 'center'; g.fillText(text, 160, 42);
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+  g.fillStyle = '#ddd'; g.font = 'bold 28px sans-serif'; g.textAlign = 'center'; g.fillText(text, 160, 42);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, fog: false }));
   s.scale.set(w, w / 5, 1); s.position.set(x, y, z); s.userData.label = true; p.add(s);
 }
 function rooms(p, list, y0, up) {
   list.forEach(function (r) {
     const w = r[3] - r[1], d = r[4] - r[2];
-    box(p, (r[1] + r[3]) / 2, y0 + 0.02, (r[2] + r[4]) / 2, w, 0.04, d, r[6] ? tile(w, d) : M(r[5], 1));
-    label(p, r[0], (r[1] + r[3]) / 2, y0 + (up ? 2.4 : 5), r[0] === 'SẢNH' ? 16 : (r[2] + r[4]) / 2, Math.min(7, w * 0.8));
+    const m = r[6] ? SM(tex('', w / 4, d / 4, true), 0.35, 0.2) : SM(FLOORTEX.clone(), 0.9, 0.8);
+    if (!r[6]) { m.map.needsUpdate = true; m.map.repeat.set(w / 6, d / 6); m.bumpMap = m.map; m.color.setHex(r[5] + 0x222222); }
+    box(p, (r[1] + r[3]) / 2, y0 + 0.02, (r[2] + r[4]) / 2, w, 0.04, d, m);
+    label(p, r[0], (r[1] + r[3]) / 2, y0 + (up ? 2.4 : 5), r[0] === 'SẢNH' ? 12 : (r[2] + r[4]) / 2, Math.min(7, w * 0.8));
   });
 }
-const rail = function (p, x1, z1, x2, z2, y0) { return box(p, (x1 + x2) / 2, y0 + RH / 2, (z1 + z2) / 2, Math.max(0.1, x2 - x1), RH, Math.max(0.1, z2 - z1), RAIL); };
+function rail(p, x1, z1, x2, z2, y0) {   // tay vịn đặc + thanh trên màu sáng
+  const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2, w = Math.max(0.1, x2 - x1), d = Math.max(0.1, z2 - z1);
+  box(p, cx, y0 + RH / 2, cz, w, RH, d, RAIL); box(p, cx, y0 + RH + 0.05, cz, w + 0.1, 0.1, d + 0.1, CAP);
+}
 
 // Tầng trệt + tầng lầu (sàn lầu có lỗ cầu thang)
 rooms(G, RG, 0, false); WG.forEach(function (w) { wall(G, w, 0, WHG); });
 rooms(U, RU, F2, true); WU.forEach(function (w) { wall(U, w, F2, WHU); });
-const SL = M(0x1c1c1c, 1);
 const slab = function (x1, z1, x2, z2) { box(U, (x1 + x2) / 2, F2 - 0.1, (z1 + z2) / 2, x2 - x1, 0.2, z2 - z1, SL); };
 slab(0, 0, W, HZ); slab(0, HZ, CX - HH, D); slab(CX + HH, HZ, W, D);
-rail(U, CX - 13.5, HZ, CX + 13.5, HZ, F2); rail(U, CX - HH, HZ, CX - HH, D, F2); rail(U, CX + HH, HZ, CX + HH, D, F2);
+rail(U, CX - IN, HZ, CX + IN, HZ, F2); rail(U, CX - HH, HZ, CX - HH, D, F2); rail(U, CX + HH, HZ, CX + HH, D, F2);
 
-// Cầu thang đôi: thang giữa -> chiếu nghỉ -> 2 thang vòng cung ra 2 bên lên tầng lầu
-function flight(x0, z0, w, n, base, m, carpet) {
+// Cầu thang: bậc đen trắng xen kẽ, tay vịn đặc 2 mép
+function flight(x0, z0, w, n, base) {
   for (let i = 0; i < n; i++) {
     const top = base + (i + 1) * RISE, cz = z0 - (i + 0.5) * RUN;
-    box(B, x0, top / 2, cz, w, top, RUN, m);
-    if (carpet) box(B, x0, top + 0.02, cz, w * 0.6, 0.04, RUN, CARPET);
-    [-1, 1].forEach(function (s) { box(B, x0 + s * (w / 2 - 0.05), top + RH / 2, cz, 0.1, RH, RUN, RAIL); });
+    box(B, x0, top / 2, cz, w, top, RUN, i % 2 ? STB : STW);
+    [-1, 1].forEach(function (s) { box(B, x0 + s * (w / 2 - 0.05), top + RH / 2, cz, 0.1, RH, RUN, RAIL); box(B, x0 + s * (w / 2 - 0.05), top + RH + 0.05, cz, 0.16, 0.1, RUN, CAP); });
   }
 }
-function arc(cx, cz, r, a0, a1, n, w, base, m) {
+function arc(cx, cz, r, a0, a1, n, w, base) {
   const da = (a1 - a0) / n, len = r * Math.abs(da) * 1.04;
   for (let i = 0; i < n; i++) {
     const a = a0 + (i + 0.5) * da, top = base + (i + 1) * RISE, ca = Math.cos(a), sa = Math.sin(a);
-    box(B, cx + r * ca, top / 2, cz + r * sa, w, top, len, m).rotation.y = -a;
-    box(B, cx + r * ca, top + 0.02, cz + r * sa, w * 0.6, 0.04, len, CARPET).rotation.y = -a;
+    box(B, cx + r * ca, top / 2, cz + r * sa, w, top, len, i % 2 ? STB : STW).rotation.y = -a;
     [-1, 1].forEach(function (s) {
       const o = r + s * (w / 2 - 0.05);
       box(B, cx + o * ca, top + RH / 2, cz + o * sa, 0.1, RH, len, RAIL).rotation.y = -a;
+      box(B, cx + o * ca, top + RH + 0.05, cz + o * sa, 0.16, 0.1, len, CAP).rotation.y = -a;
     });
   }
 }
-flight(CX, FZ0, MW, STEPS, 0, STEP1, true);
-box(B, CX, LH / 2, LZ, 16, LH, 6, STEP1); box(B, CX, LH + 0.02, LZ, 8, 0.04, 6, CARPET);
-arc(CX - 8, HZ, AR, Math.PI / 2, Math.PI, STEPS, AW, LH, STEP2);
-arc(CX + 8, HZ, AR, Math.PI / 2, 0, STEPS, AW, LH, STEP2);
-rail(B, CX - 8, LZ - 3, CX + 8, LZ - 3, LH);
-rail(B, CX - 8, LZ + 3, CX - 4, LZ + 3, LH); rail(B, CX + 4, LZ + 3, CX + 8, LZ + 3, LH);
+flight(CX, FZ0, MW, STEPS, 0);
+box(B, CX, LH / 2, LZ, 16, LH, LD, STW);
+arc(CX - 8, HZ, AR, Math.PI / 2, Math.PI, STEPS, AW, LH);
+arc(CX + 8, HZ, AR, Math.PI / 2, 0, STEPS, AW, LH);
+rail(B, CX - 8, LZ - LD / 2, CX + 8, LZ - LD / 2, LH);
+rail(B, CX - 8, LZ + LD / 2, CX - MW / 2, LZ + LD / 2, LH); rail(B, CX + MW / 2, LZ + LD / 2, CX + 8, LZ + LD / 2, LH);
 label(B, 'CẦU THANG ĐÔI', CX, F2 + 2, LZ, 5);
 
 // Cửa chính (thoát hiểm), chìa khóa, pin
-box(G, EXIT[0], DH / 2, EXIT[1], 4, DH, 0.25, M(0x5a0a0a));
-const key = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.15, 8, 16), new THREE.MeshBasicMaterial({ color: 0xfff3b0 }));
+box(G, EXIT[0], DH / 2, EXIT[1], 4, DH, 0.25, M(0x4a0808, 0.6));
+const key = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.15, 12, 24), new THREE.MeshBasicMaterial({ color: 0xfff3b0 }));
 key.position.set(KEY[0], 1, KEY[1]); key.rotation.x = Math.PI / 2; G.add(key);
-BAT.forEach(function (b) { box(b[2] ? U : G, b[0], b[2] + 0.6, b[1], 0.5, 0.8, 0.5, new THREE.MeshBasicMaterial({ color: 0xffffff })); });
+BAT.forEach(function (b) { box(b[2] ? U : G, b[0], b[2] + 0.6, b[1], 0.5, 0.8, 0.5, new THREE.MeshBasicMaterial({ color: 0xdddddd })); });
 
 // Chọn tầng
 function showFloors(n) { G.visible = n !== 2; U.visible = n !== 1; $('fl').textContent = ['', 'TẦNG TRỆT', 'TẦNG LẦU', 'CẢ HAI'][n]; }
@@ -189,7 +218,7 @@ const keys = {}; let tx = CX, tz = D / 2, h = 105, mode = 'top', yaw = 0, pitch 
 const fpos = new THREE.Vector3(), dom = renderer.domElement;
 const HELP = {
   top: '<kbd>W A S D</kbd> kéo bản đồ &nbsp; <kbd>Q</kbd>/<kbd>E</kbd> phóng to / thu nhỏ',
-  fly: 'Bấm vào màn hình để khóa chuột (<kbd>Esc</kbd> nhả) hoặc giữ chuột để xoay<br><kbd>W A S D</kbd> bay &nbsp; <kbd>Space</kbd> lên &nbsp; <kbd>Shift</kbd> xuống &nbsp; <kbd>Z</kbd>/<kbd>X</kbd> chậm / nhanh<br><kbd>H</kbd> cửa chính nhìn lên thang &nbsp; <kbd>G</kbd> hành lang 2 nhìn xuống sảnh &nbsp; <kbd>Y</kbd> hành lang 2 &nbsp; <kbd>T</kbd> hành lang 1'
+  fly: 'Bấm vào màn hình để khóa chuột (<kbd>Esc</kbd> nhả) hoặc giữ chuột để xoay<br><kbd>W A S D</kbd> bay &nbsp; <kbd>Space</kbd> lên &nbsp; <kbd>Shift</kbd> xuống &nbsp; <kbd>Z</kbd>/<kbd>X</kbd> chậm / nhanh<br><kbd>H</kbd> cửa chính nhìn vào thang &nbsp; <kbd>G</kbd> hành lang 2 nhìn xuống sảnh &nbsp; <kbd>Y</kbd> hành lang 2 &nbsp; <kbd>T</kbd> hành lang 1'
 };
 function setMode(m) {
   mode = m;
@@ -200,7 +229,6 @@ function setMode(m) {
   $('help').innerHTML = HELP[m];
 }
 setMode('top');
-
 dom.addEventListener('click', function () { if (mode === 'fly' && !document.pointerLockElement) dom.requestPointerLock(); });
 dom.addEventListener('mousedown', function () { drag = true; });
 addEventListener('mouseup', function () { drag = false; });
@@ -214,13 +242,14 @@ addEventListener('keydown', function (e) {
   if (e.code === 'Digit1') showFloors(1);
   if (e.code === 'Digit2') showFloors(2);
   if (e.code === 'Digit3') showFloors(3);
+  if (e.code === 'KeyK') { ri = (ri + 1) % 3; setRes(); st('Độ phân giải x' + RATIOS[ri]); }
   if (e.code === 'KeyL') { labelsOn = !labelsOn; scene.traverse(function (o) { if (o.userData.label) o.visible = labelsOn; }); }
-  if (e.code === 'KeyF') { bright = !bright; amb.intensity = bright ? 0.75 : 0.15; sun.intensity = bright ? 0.6 : 0; }
+  if (e.code === 'KeyF') { bright = !bright; amb.intensity = bright ? 0.22 : 0.04; sun.intensity = bright ? 0.5 : 0; hemi.intensity = bright ? 0.25 : 0.03; PL.forEach(function (l) { l.visible = bright; }); }
   if (mode === 'fly') {
     if (e.code === 'KeyT') { fpos.set(2, 1.6, 4); yaw = -Math.PI / 2; pitch = 0; showFloors(1); }
-    if (e.code === 'KeyH') { fpos.set(CX, 1.6, D - 1.5); yaw = 0; pitch = 0.45; showFloors(3); }
-    if (e.code === 'KeyG') { fpos.set(CX, F2 + 1.6, HZ - 3); yaw = Math.PI; pitch = -0.35; showFloors(3); }
-    if (e.code === 'KeyY') { fpos.set(2, F2 + 1.6, (22 + HZ) / 2); yaw = -Math.PI / 2; pitch = 0; showFloors(2); }
+    if (e.code === 'KeyH') { fpos.set(CX, 1.6, D - 1.5); yaw = 0; pitch = 0.3; showFloors(3); }
+    if (e.code === 'KeyG') { fpos.set(CX, F2 + 1.6, HZ - 2.5); yaw = Math.PI; pitch = -0.35; showFloors(3); }
+    if (e.code === 'KeyY') { fpos.set(2, F2 + 1.6, (NZ + HZ) / 2); yaw = -Math.PI / 2; pitch = 0; showFloors(2); }
     if (e.code === 'KeyZ') speed = Math.max(2, speed / 1.4);
     if (e.code === 'KeyX') speed = Math.min(120, speed * 1.4);
     if (e.code === 'Space') e.preventDefault();
@@ -232,6 +261,7 @@ const clock = new THREE.Clock();
 (function loop() {
   requestAnimationFrame(loop);
   const dt = Math.min(clock.getDelta(), 0.05);
+  if (bright && Math.random() < 0.1) chand.intensity = 1.1 + Math.random() * 0.6;   // đèn sảnh chập chờn
   if (mode === 'top') {
     const s = h * 0.012;
     if (keys.KeyW) tz -= s; if (keys.KeyS) tz += s;
