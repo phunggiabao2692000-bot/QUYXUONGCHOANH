@@ -6,7 +6,7 @@
 <title>Nhà kinh dị - xem bản đồ</title>
 <style>
 body{margin:0;overflow:hidden;background:#000;font-family:'Segoe UI',Arial,sans-serif;color:#eee}
-#info{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.82);border:1px solid #666;padding:8px 12px;font-size:13px;line-height:1.7;max-width:340px;z-index:5}
+#info{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.82);border:1px solid #666;padding:8px 12px;font-size:13px;line-height:1.7;max-width:350px;z-index:5}
 kbd{background:#222;border:1px solid #777;border-radius:3px;padding:0 5px;font-size:12px}
 #st{color:#9f9}#mode,#fl{color:#fff;font-weight:700}
 #err{display:none;position:fixed;left:0;right:0;top:0;z-index:99;background:#b00;color:#fff;padding:10px 14px;font-size:15px}
@@ -16,10 +16,10 @@ kbd{background:#222;border:1px solid #777;border-radius:3px;padding:0 5px;font-s
 <body>
 <div id="err"></div>
 <div id="info">
-  <div><b>Nhà 80x56m, có nội thất, tủ sách sau cầu thang</b></div>
+  <div><b>Nhà 72x52m: phòng game, phòng bí mật, đèn chùm</b></div>
   <div id="st">Đang chờ...</div>
   <div>Chế độ: <span id="mode"></span> (<kbd>V</kbd> đổi) &nbsp; Xem: <span id="fl"></span></div>
-  <div><kbd>1</kbd> tầng trệt &nbsp; <kbd>2</kbd> tầng lầu &nbsp; <kbd>3</kbd> cả hai &nbsp; <kbd>L</kbd> tên phòng &nbsp; <kbd>F</kbd> sáng/tối &nbsp; <kbd>K</kbd> độ phân giải</div>
+  <div><kbd>1</kbd> tầng trệt &nbsp; <kbd>2</kbd> tầng lầu &nbsp; <kbd>3</kbd> cả hai &nbsp; <kbd>L</kbd> tên phòng &nbsp; <kbd>C</kbd> trần nhà &nbsp; <kbd>F</kbd> sáng/tối &nbsp; <kbd>K</kbd> độ phân giải</div>
   <div id="help"></div>
 </div>
 <script>
@@ -42,40 +42,46 @@ else {
 
 function build() {
 // ================= BẢN ĐỒ (mét). x sang phải, z xuống. Cửa chính ở z = D =================
-const W = 80, D = 56, CX = W / 2, F2 = 9.6;
-const WT = 0.3, WHG = F2 - 0.2, WHU = 4, DH = 3, NZ = 14;
+const W = 72, D = 52, CX = W / 2, F2 = 9.6;
+const WT = 0.3, WHG = F2 - 0.2, WHU = 4, DH = 3, NZ = 12, GZ = 7, SW = 14;   // NZ: độ sâu phòng phía bắc tầng lầu | GZ: hành lang 1 | SW: bề rộng khối phòng 2 bên
 const STEPS = 24, RISE = (F2 / 2) / STEPS, RUN = 0.3, RH = 1, LD = 4, MW = 8, AR = 6, AW = 5;
 const TOT = STEPS * RUN + LD / 2 + AR;
 const FZ0 = D / 2 + TOT / 2, HZ = D / 2 - TOT / 2;
 const LZ = FZ0 - STEPS * RUN - LD / 2, LH = F2 / 2;
 const HH = 8 + AR + AW / 2, IN = 8 + AR - AW / 2;
-const GY = 0.04, UY = F2 + 0.04;   // mặt sàn tầng trệt / tầng lầu
+const T1 = HZ + 8, T2 = HZ + 16, KS = HZ + 17;       // ranh giới: tắm 1 | tắm 2 | game ; trẻ em | bí mật
+const GY = 0.04, UY = F2 + 0.04, UC = F2 + WHU;
 
 // [tên, x1, z1, x2, z2, màu sàn, lát caro?]
 const RG = [
-  ['HÀNH LANG 1', 0, 0, W, 8, 0x4a4a4a, 0], ['PHÒNG KHÁCH', 0, 8, 16, D, 0x2a2a2a, 0],
-  ['SẢNH', 16, 8, W - 16, D, 0x777777, 1], ['PHÒNG KHO', W - 16, 8, W, D, 0x202020, 0]
+  ['HÀNH LANG 1', 0, 0, W, GZ, 0x4a4a4a, 0], ['PHÒNG KHÁCH', 0, GZ, SW, D, 0x2a2a2a, 0],
+  ['SẢNH', SW, GZ, W - SW, D, 0x777777, 1], ['PHÒNG KHO', W - SW, GZ, W, D, 0x202020, 0]
 ];
 const RU = [
-  ['PHÒNG NGỦ', 0, 0, 26, NZ, 0x2a2a2a, 0], ['PHÒNG BẾP', 26, 0, 54, NZ, 0x777777, 1],
-  ['THƯ VIỆN', 54, 0, W, NZ, 0x202020, 0], ['HÀNH LANG 2', 0, NZ, W, HZ, 0x3a3a3a, 0],
-  ['PHÒNG TẮM', 0, HZ, 16, D, 0x777777, 1], ['BAN CÔNG TÂY', 16, HZ, CX - HH, D, 0x333333, 0],
-  ['BAN CÔNG ĐÔNG', CX + HH, HZ, W - 16, D, 0x333333, 0], ['PHÒNG TRẺ EM', W - 16, HZ, W, D, 0x2a2a2a, 0]
+  ['PHÒNG NGỦ', 0, 0, 26, NZ, 0x2a2a2a, 0], ['PHÒNG BẾP', 26, 0, 50, NZ, 0x777777, 1],
+  ['THƯ VIỆN', 50, 0, W, NZ, 0x202020, 0], ['HÀNH LANG 2', 0, NZ, W, HZ, 0x3a3a3a, 0],
+  ['PHÒNG TẮM 1', 0, HZ, SW, T1, 0x777777, 1], ['PHÒNG TẮM 2', 0, T1, SW, T2, 0x777777, 1],
+  ['PHÒNG GAME', 0, T2, SW, D, 0x1c1c1c, 0],
+  ['BAN CÔNG TÂY', SW, HZ, CX - HH, D, 0x333333, 0], ['BAN CÔNG ĐÔNG', CX + HH, HZ, W - SW, D, 0x333333, 0],
+  ['PHÒNG TRẺ EM', W - SW, HZ, W, KS, 0x2a2a2a, 0], ['PHÒNG BÍ MẬT', W - SW, KS, W, D, 0x111111, 0]
 ];
-// Tường: [hướng, từ, đến, vị trí cố định, [cửa [bắt đầu, kết thúc]]]
+// Tường: [hướng, từ, đến, vị trí cố định, [cửa [bắt đầu, kết thúc]]]  ('x' chạy ngang, 'z' chạy dọc; cửa xếp từ nhỏ đến lớn)
 const WG = [
   ['x', 0, W, 0, []], ['x', 0, W, D, [[CX - 2, CX + 2]]], ['z', 0, D, 0, []], ['z', 0, D, W, []],
-  ['x', 0, W, 8, [[6, 9], [CX - 8, CX + 8], [W - 9, W - 6]]],
-  ['z', 8, D, 16, [[30, 33]]], ['z', 8, D, W - 16, [[30, 33]]]
+  ['x', 0, W, GZ, [[5, 8], [CX - 8, CX + 8], [W - 8, W - 5]]],
+  ['z', GZ, D, SW, [[26, 29]]], ['z', GZ, D, W - SW, [[26, 29]]]
 ];
 const WU = [
   ['x', 0, W, 0, []], ['x', 0, W, D, []], ['z', 0, D, 0, []], ['z', 0, D, W, []],
-  ['x', 0, W, NZ, [[11.5, 14.5], [38.5, 41.5], [65.5, 68.5]]], ['z', 0, NZ, 26, []], ['z', 0, NZ, 54, []],
-  ['x', 0, 16, HZ, [[6.5, 9.5]]], ['x', W - 16, W, HZ, [[W - 9.5, W - 6.5]]],
-  ['z', HZ, D, 16, []], ['z', HZ, D, W - 16, []]
+  ['x', 0, W, NZ, [[11, 14], [28, 31], [58, 61]]], ['z', 0, NZ, 26, []], ['z', 0, NZ, 50, []],
+  ['x', 0, SW, HZ, [[9, 12]]], ['x', 0, SW, T1, []], ['x', 0, SW, T2, []],
+  ['z', HZ, D, SW, [[HZ + 2.5, HZ + 5.5], [T1 + 2.5, T1 + 5.5], [T2 + 4, T2 + 7]]],
+  ['x', W - SW, W, HZ, [[W - 12, W - 9]]],
+  ['x', W - SW, W, KS, [[W - 8, W - 5]]],            // lối vào phòng bí mật (che sau kệ sách)
+  ['z', HZ, D, W - SW, [[HZ + 4, HZ + 7]]]
 ];
 const KEY = [W - 8, 30], EXIT = [CX, D];
-const BAT = [[8, 14, 0], [CX, 4, 0], [W - 8, 48, 0], [11, 9, F2]];   // [x, z, độ cao sàn]
+const BAT = [[7, 12, 0], [CX, 3.5, 0], [W - 7, 46, 0], [66, 5, F2]];   // [x, z, độ cao sàn]
 // ==========================================================================================
 
 const scene = new THREE.Scene();
@@ -87,28 +93,22 @@ const RATIOS = [1, 1.5, 2]; let ri = 0;
 function setRes() { renderer.setPixelRatio(RATIOS[ri]); renderer.setSize(innerWidth, innerHeight); }
 setRes();
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.85;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;
 renderer.outputEncoding = THREE.sRGBEncoding;
 document.body.appendChild(renderer.domElement);
 addEventListener('resize', function () { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); setRes(); });
 
-const amb = new THREE.AmbientLight(0xffffff, 0.24); scene.add(amb);
+const amb = new THREE.AmbientLight(0xffffff, 0.26); scene.add(amb);
 const hemi = new THREE.HemisphereLight(0x8890a0, 0x1a1010, 0.25); scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xaab4ff, 0.5); sun.position.set(30, 110, 40);
+const sun = new THREE.DirectionalLight(0xaab4ff, 0.45); sun.position.set(30, 110, 40);
 sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005;
-const sc = sun.shadow.camera; sc.left = -70; sc.right = 70; sc.top = 70; sc.bottom = -70; sc.near = 1; sc.far = 300;
+const sc = sun.shadow.camera; sc.left = -60; sc.right = 60; sc.top = 60; sc.bottom = -60; sc.near = 1; sc.far = 300;
 scene.add(sun);
-const PL = [];
-function pl(x, y, z, c, i, d) { const l = new THREE.PointLight(c, i, d, 1.5); l.position.set(x, y, z); scene.add(l); PL.push(l); return l; }
-const chand = pl(CX, 7, 46, 0xffc880, 1.3, 46);        // sảnh
-pl(CX, 4, 4, 0xbcc8ff, 0.5, 26);                        // hành lang 1
-pl(CX - 6.5, 3, 22, 0xffd9a0, 0.9, 14);                 // đèn cây cạnh tủ sách
-pl(CX, F2 + 3, 17, 0xbcc8ff, 0.6, 30);                  // hành lang 2
-const cl = pl(31.5, F2 + 2.6, 9.5, 0xffb060, 0.9, 16);  // nến bàn ăn
 
-const G = new THREE.Group(), U = new THREE.Group(), B = new THREE.Group();
-scene.add(G); scene.add(U); scene.add(B);
+const G = new THREE.Group(), U = new THREE.Group(), B = new THREE.Group(), CE = new THREE.Group();
+scene.add(G); scene.add(U); scene.add(B); U.add(CE); CE.visible = false;
 const AN = renderer.capabilities.getMaxAnisotropy();
+const LT = [];   // danh sách đèn: {l: đèn, base: độ sáng, flick: có chập chờn không}
 
 function tex(base, r1, r2, tile) {
   const S = 256, c = document.createElement('canvas'); c.width = c.height = S;
@@ -127,10 +127,12 @@ function tex(base, r1, r2, tile) {
 const SM = function (map, rough, bump) { return new THREE.MeshStandardMaterial({ map: map, bumpMap: map, bumpScale: bump, roughness: rough, metalness: 0.05 }); };
 const M = function (c, r, e) { return new THREE.MeshStandardMaterial({ color: c, roughness: r === undefined ? 0.8 : r, emissive: e || 0 }); };
 const WALL = SM(tex('#6b6966', 1, 1, false), 0.95, 1.2);
-const RAIL = M(0x1a1a1a, 0.5), CAP = M(0xa8a8a8, 0.4), STW = M(0xcfcfcf, 0.6), STB = M(0x101010, 0.5), SL = M(0x181818, 1);
+const RAIL = M(0x1a1a1a, 0.5), CAP = M(0xa8a8a8, 0.4), STW = M(0xcfcfcf, 0.6), STB = M(0x101010, 0.5), SL = M(0x181818, 1), IRON = M(0x161616, 0.45);
 const MT = {
   wood: M(0x2b2622, 0.7), wood2: M(0x4a443e, 0.7), wh: M(0xd8d8d8, 0.7), bk: M(0x0e0e0e, 0.6), gy: M(0x6a6a6a, 0.7),
   fab: M(0x3c3c3e, 1), red: M(0x4a0b0b, 0.9), met: M(0x8a8a8a, 0.4), lamp: M(0xffe0b0, 0.5, 0x553311), flame: M(0xffcc66, 0.5, 0xffaa33),
+  scr: M(0xdcecff, 0.3, 0x7fb0e8), neon: new THREE.MeshBasicMaterial({ color: 0xffffff }),
+  cry: new THREE.MeshStandardMaterial({ color: 0xeef4ff, transparent: true, opacity: 0.75, roughness: 0.05, metalness: 0.3, emissive: 0x223344 }),
   gl: new THREE.MeshStandardMaterial({ color: 0x99aabb, transparent: true, opacity: 0.35, roughness: 0.1 })
 };
 
@@ -146,9 +148,9 @@ function make(p, x, y0, z, ry, parts) {
   });
   p.add(g); return g;
 }
-function put(p, y0, x, z, ry, parts, rx) { const g = make(p, x, y0, z, ry, parts); if (rx) g.rotation.x = rx; return g; }
+function put(p, y0, x, z, ry, parts, rx, sc) { const g = make(p, x, y0, z, ry, parts); if (rx) g.rotation.x = rx; if (sc) g.scale.setScalar(sc); return g; }
 
-// Texture gáy sách đen trắng
+// Tranh gáy sách đen trắng
 const BT = (function () {
   const c = document.createElement('canvas'); c.width = c.height = 128;
   const g = c.getContext('2d'); g.fillStyle = '#070707'; g.fillRect(0, 0, 128, 128);
@@ -162,6 +164,102 @@ const BT = (function () {
 })();
 function bookMat(w, h) { const t = BT.clone(); t.needsUpdate = true; t.repeat.set(w / 1.7, h / 1.2); return new THREE.MeshStandardMaterial({ map: t, roughness: 0.9 }); }
 
+// ===== TRANH LỚN đen trắng vẽ bằng code (6 kiểu) =====
+const ART = {};
+function art(k) {
+  if (ART[k]) return ART[k];
+  const c = document.createElement('canvas'); c.width = 256; c.height = 192;
+  const g = c.getContext('2d'), R = Math.random;
+  const bg = g.createLinearGradient(0, 0, 0, 192); bg.addColorStop(0, '#2c2c2c'); bg.addColorStop(1, '#bdbdbd');
+  g.fillStyle = bg; g.fillRect(0, 0, 256, 192); g.lineCap = 'round';
+  if (k === 0) {          // trăng và cây khô
+    g.fillStyle = '#f2f2f2'; g.beginPath(); g.arc(178, 62, 36, 0, 7); g.fill();
+    g.strokeStyle = '#050505';
+    (function br(x, y, len, a, d) {
+      if (d > 6) return;
+      const x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len;
+      g.lineWidth = 8 - d; g.beginPath(); g.moveTo(x, y); g.lineTo(x2, y2); g.stroke();
+      br(x2, y2, len * 0.75, a - 0.45 + R() * 0.2, d + 1); br(x2, y2, len * 0.72, a + 0.4 + R() * 0.2, d + 1);
+    })(70, 192, 42, -Math.PI / 2, 0);
+  } else if (k === 1) {   // con mắt
+    g.fillStyle = '#d8d8d8'; g.fillRect(0, 0, 256, 192);
+    g.beginPath(); g.moveTo(24, 96); g.quadraticCurveTo(128, 6, 232, 96); g.quadraticCurveTo(128, 186, 24, 96);
+    g.fillStyle = '#fafafa'; g.fill(); g.strokeStyle = '#000'; g.lineWidth = 6; g.stroke();
+    g.fillStyle = '#3a3a3a'; g.beginPath(); g.arc(128, 96, 36, 0, 7); g.fill();
+    g.fillStyle = '#000'; g.beginPath(); g.arc(128, 96, 15, 0, 7); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(118, 86, 6, 0, 7); g.fill();
+    g.lineWidth = 3; for (let i = 0; i < 9; i++) { const x = 40 + i * 22; g.beginPath(); g.moveTo(x, 70 - Math.sin(i / 8 * Math.PI) * 30); g.lineTo(x - 6, 52 - Math.sin(i / 8 * Math.PI) * 34); g.stroke(); }
+  } else if (k === 2) {   // ngôi nhà ma
+    g.fillStyle = '#eee'; g.beginPath(); g.arc(210, 40, 20, 0, 7); g.fill();
+    g.fillStyle = '#050505'; g.fillRect(70, 100, 110, 80); g.beginPath(); g.moveTo(60, 100); g.lineTo(125, 44); g.lineTo(190, 100); g.fill();
+    g.fillRect(150, 52, 14, 30); g.fillRect(0, 175, 256, 17);
+    g.fillStyle = '#f0f0f0'; g.fillRect(105, 118, 22, 28); g.fillRect(143, 118, 22, 28); g.fillStyle = '#000'; g.fillRect(115, 118, 2, 28); g.fillRect(105, 131, 22, 2);
+    g.fillStyle = '#222'; g.fillRect(116, 150, 18, 30);
+  } else if (k === 3) {   // chân dung không mặt
+    g.fillStyle = '#9a9a9a'; g.fillRect(0, 0, 256, 192);
+    g.fillStyle = '#0d0d0d'; g.beginPath(); g.arc(128, 215, 92, Math.PI, 0); g.fill();
+    g.fillStyle = '#e4e4e4'; g.beginPath(); g.ellipse(128, 86, 36, 48, 0, 0, 7); g.fill();
+    g.fillStyle = '#0a0a0a'; g.beginPath(); g.ellipse(128, 70, 40, 44, 0, Math.PI, 0); g.fill(); g.fillRect(88, 66, 80, 8);
+  } else if (k === 4) {   // vòng xoắn
+    g.fillStyle = '#101010'; g.fillRect(0, 0, 256, 192);
+    g.strokeStyle = '#f2f2f2'; g.lineWidth = 3; g.beginPath();
+    for (let i = 0; i < 420; i++) { const a = i * 0.1, r = i * 0.21; g.lineTo(128 + r * Math.cos(a), 96 + r * Math.sin(a) * 0.8); }
+    g.stroke();
+  } else {                // hành lang vô tận
+    g.fillStyle = '#cfcfcf'; g.fillRect(0, 0, 256, 192);
+    g.strokeStyle = '#111'; g.lineWidth = 3;
+    [[0, 0, 100, 70], [256, 0, 156, 70], [0, 192, 100, 122], [256, 192, 156, 122]].forEach(function (l) { g.beginPath(); g.moveTo(l[0], l[1]); g.lineTo(l[2], l[3]); g.stroke(); });
+    g.fillStyle = '#080808'; g.fillRect(100, 70, 56, 52); g.fillStyle = '#eee'; g.fillRect(125, 92, 6, 26);
+  }
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = AN; ART[k] = t; return t;
+}
+const FR1 = M(0x9a9a9a, 0.4), FR2 = M(0x0b0b0b, 0.5);
+function painting(p, x, y, z, ry, w, h, k) {   // mặt tranh quay về +z (xoay ry để quay vào phòng)
+  const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry;
+  g.add(mk(w + 0.8, h + 0.8, 0.1, FR1, 0, 0, 0.05));
+  g.add(mk(w + 0.4, h + 0.4, 0.13, FR2, 0, 0, 0.065));
+  const pm = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: art(k), roughness: 0.9 }));
+  pm.position.z = 0.14; g.add(pm);
+  g.add(mk(Math.min(w * 0.6, 3), 0.1, 0.45, MT.lamp, 0, h / 2 + 0.7, 0.3));   // đèn rọi tranh
+  p.add(g); return g;
+}
+
+// ===== ĐÈN TRẦN trong từng phòng (đèn thả có ánh sáng thật) =====
+function lamp(p, x, ceilY, drop, z, col, inten, dist, flick) {
+  const g = new THREE.Group(); g.position.set(x, ceilY - drop, z);
+  g.add(mk(0.04, drop, 0.04, MT.bk, 0, drop / 2, 0));
+  const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.8, 0.5, 14, 1, true), new THREE.MeshStandardMaterial({ color: 0x151515, side: THREE.DoubleSide, roughness: 0.6 }));
+  shade.position.y = 0.1; g.add(shade);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), new THREE.MeshBasicMaterial({ color: col })); bulb.position.y = -0.05; g.add(bulb);
+  const l = new THREE.PointLight(col, inten, dist, 1.5); l.position.y = -0.4; g.add(l);
+  LT.push({ l: l, base: inten, flick: !!flick }); p.add(g); return l;
+}
+
+// ===== ĐÈN CHÙM ở sảnh =====
+const CAND = new THREE.CylinderGeometry(0.1, 0.1, 0.55, 8), FLAME = new THREE.SphereGeometry(0.09, 6, 6), CRYS = new THREE.OctahedronGeometry(0.14);
+function chandelier(p, x, y, z) {
+  const g = new THREE.Group(); g.position.set(x, y, z);
+  g.add(mk(0.1, 2.8, 0.1, MT.bk, 0, 1.4, 0));            // xích treo lên xà
+  g.add(mk(0.7, 0.35, 0.7, IRON, 0, 0.1, 0));
+  g.add(mk(0.28, 2.6, 0.28, IRON, 0, -1.3, 0));          // trục giữa
+  [[2.7, -0.9, 14], [1.9, -1.7, 10], [1.1, -2.4, 6]].forEach(function (r) {
+    const R = r[0], yy = r[1], n = r[2];
+    const t = new THREE.Mesh(new THREE.TorusGeometry(R, 0.07, 6, 40), IRON); t.rotation.x = Math.PI / 2; t.position.y = yy; g.add(t);
+    for (let s = 0; s < 4; s++) { const th = s * Math.PI / 2, sp = mk(R, 0.05, 0.05, IRON, Math.cos(th) * R / 2, yy, Math.sin(th) * R / 2); sp.rotation.y = -th; g.add(sp); }
+    for (let i = 0; i < n; i++) {
+      const a = i * 2 * Math.PI / n, cx = Math.cos(a) * R, cz = Math.sin(a) * R;
+      const cd = new THREE.Mesh(CAND, MT.wh); cd.position.set(cx, yy + 0.3, cz); g.add(cd);
+      const fl = new THREE.Mesh(FLAME, MT.flame); fl.position.set(cx, yy + 0.62, cz); g.add(fl);
+      const cr = new THREE.Mesh(CRYS, MT.cry); cr.position.set(Math.cos(a + Math.PI / n) * R, yy - 0.35, Math.sin(a + Math.PI / n) * R); cr.scale.y = 2.2; g.add(cr);
+    }
+  });
+  const fin = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.7, 10), IRON); fin.rotation.x = Math.PI; fin.position.y = -3.0; g.add(fin);
+  const L = new THREE.PointLight(0xffc880, 1.8, 50, 1.5); L.position.y = -1.2; g.add(L);
+  LT.push({ l: L, base: 1.8, flick: true });
+  p.add(g); return g;
+}
+
+// ===== THƯ VIỆN NỘI THẤT =====
 const P = {
   shelf: function (w, h, d) {
     const a = [[-w / 2 + 0.06, 0, 0, 0.12, h, d, 'wood'], [w / 2 - 0.06, 0, 0, 0.12, h, d, 'wood'], [0, h - 0.12, 0, w, 0.12, d, 'wood'], [0, 0, 0, w - 0.2, 0.15, d, 'wood'], [0, 0.15, -d / 2 + 0.05, w - 0.24, h - 0.27, 0.08, bookMat(w, h)]];
@@ -188,16 +286,28 @@ const P = {
     return c;
   },
   rocker: function () { return [[0, 0.45, 0, 0.9, 0.1, 0.9, 'wood'], [0, 0.55, -0.4, 0.9, 1.1, 0.1, 'wood'], [-0.5, 0.7, 0, 0.08, 0.1, 0.9, 'wood'], [0.5, 0.7, 0, 0.08, 0.1, 0.9, 'wood'], [-0.45, 0, 0, 0.08, 0.08, 1.4, 'wood'], [0.45, 0, 0, 0.08, 0.08, 1.4, 'wood'], [-0.4, 0.08, -0.4, 0.06, 0.4, 0.06, 'wood'], [0.4, 0.08, -0.4, 0.06, 0.4, 0.06, 'wood'], [-0.4, 0.08, 0.4, 0.06, 0.4, 0.06, 'wood'], [0.4, 0.08, 0.4, 0.06, 0.4, 0.06, 'wood']]; },
-  bath: function () { return [[0, 0, 0, 5.2, 0.9, 2.4, 'wh'], [0, 0.8, 0, 4.8, 0.12, 2, 'bk']]; },
+  bath: function () { return [[0, 0, 0, 5.2, 0.9, 2.4, 'wh'], [0, 0.8, 0, 4.8, 0.12, 2, 'bk'], [2.2, 0.9, -0.9, 0.1, 0.4, 0.1, 'met']]; },
   toilet: function () { return [[0, 0, 0, 0.8, 0.5, 1, 'wh'], [0, 0.5, -0.35, 0.8, 0.7, 0.3, 'wh'], [0, 0.5, 0.1, 0.7, 0.08, 0.7, 'wh']]; },
+  sink: function () { return [[0, 0, 0, 1.8, 0.9, 1.2, 'wh'], [0, 0.9, 0, 1.4, 0.05, 0.8, 'met'], [0, 1.5, -0.55, 1.8, 1.7, 0.05, 'gl']]; },
+  shower: function () { return [[0, 0, 0, 2.6, 0.12, 2.6, 'wh'], [0, 0.12, 1.3, 2.6, 3, 0.05, 'gl'], [1.3, 0.12, 0, 0.05, 3, 2.6, 'gl'], [-1.1, 0.12, -1.2, 0.08, 3.2, 0.08, 'met'], [-1.1, 3.2, -0.9, 0.5, 0.1, 0.5, 'met', 'c']]; },
   rack: function (w) { const r = []; [-1, 1].forEach(function (a) { r.push([a * (w / 2 - 0.05), 0, 0, 0.1, 3.2, 0.9, 'met']); }); [0.2, 1.4, 2.6].forEach(function (y) { r.push([0, y, 0, w, 0.08, 0.9, 'met'], [-w / 4, y + 0.08, 0, 1, 0.6, 0.7, 'wood2'], [w / 5, y + 0.08, 0.05, 1.2, 0.8, 0.6, 'wood2']); }); return r; },
+  jars: function (w) { const r = [[-w / 2 + 0.05, 0, 0, 0.1, 3.2, 0.9, 'met'], [w / 2 - 0.05, 0, 0, 0.1, 3.2, 0.9, 'met']]; [0.2, 1.4, 2.6].forEach(function (y) { r.push([0, y, 0, w, 0.08, 0.9, 'met']); for (let i = 0; i < 5; i++) r.push([-w / 2 + 0.7 + i * (w - 1.4) / 4, y + 0.08, 0, 0.45, 0.8, 0.45, 'gl', 'c']); }); return r; },
   crate: function (s) { return [[0, 0, 0, s, s, s, 'wood2'], [0, s * 0.45, 0, s + 0.04, 0.08, s + 0.04, 'wood']]; },
   barrel: function () { return [[0, 0, 0, 0.9, 1.2, 0.9, 'bk', 'c'], [0, 0.25, 0, 0.96, 0.07, 0.96, 'met', 'c'], [0, 0.85, 0, 0.96, 0.07, 0.96, 'met', 'c']]; },
-  frame: function (w, h, m) { return [[0, 0, 0, w, h, 0.06, 'bk'], [0, 0.12, 0.035, w - 0.24, h - 0.24, 0.02, m]]; },
   bench: function (w) { return [[0, 0.5, 0, w, 0.1, 0.9, 'wood2'], [-w / 2 + 0.2, 0, 0, 0.15, 0.5, 0.8, 'wood'], [w / 2 - 0.2, 0, 0, 0.15, 0.5, 0.8, 'wood'], [0, 0.6, -0.4, w, 0.7, 0.1, 'wood2']]; },
   rug: function (w, d, m) { return [[0, 0, 0, w, 0.03, d, m]]; },
   ladder: function () { const l = [[-0.4, 0, 0, 0.06, 3.6, 0.06, 'wood2'], [0.4, 0, 0, 0.06, 3.6, 0.06, 'wood2']]; for (let y = 0.4; y < 3.5; y += 0.4) l.push([0, y, 0, 0.86, 0.05, 0.06, 'wood2']); return l; },
-  piano: function () { return [[0, 0.7, 0, 3, 0.35, 4.2, 'bk'], [0, 1.05, 0, 2.9, 0.08, 4.1, 'bk'], [0, 0.6, 2.0, 2.4, 0.12, 0.5, 'wh'], [-1.2, 0, -1.8, 0.2, 0.7, 0.2, 'bk'], [1.2, 0, -1.8, 0.2, 0.7, 0.2, 'bk'], [0, 0, 1.8, 0.2, 0.7, 0.2, 'bk'], [0, 0, 3.0, 1.4, 0.55, 0.6, 'wood2']]; }
+  piano: function () { return [[0, 0.7, 0, 3, 0.35, 4.2, 'bk'], [0, 1.05, 0, 2.9, 0.08, 4.1, 'bk'], [0, 0.6, 2.0, 2.4, 0.12, 0.5, 'wh'], [-1.2, 0, -1.8, 0.2, 0.7, 0.2, 'bk'], [1.2, 0, -1.8, 0.2, 0.7, 0.2, 'bk'], [0, 0, 1.8, 0.2, 0.7, 0.2, 'bk'], [0, 0, 3.0, 1.4, 0.55, 0.6, 'wood2']]; },
+  counter: function (w) { return [[0, 0, 0, w, 1, 1.2, 'wood'], [0, 1, 0, w + 0.2, 0.1, 1.3, 'wh'], [-w * 0.3, 1.1, 0, 1.8, 0.08, 0.9, 'bk'], [w * 0.2, 1.1, 0, 2, 0.05, 0.9, 'met'], [0, 2.4, -0.25, w, 0.9, 0.7, 'wood2']]; },
+  freezer: function () { return [[0, 0, 0, 4.5, 0.25, 2.3, 'gy'], [0, 0.25, 0, 4.4, 3.7, 2.2, 'wh'], [0, 3.95, 0, 4.5, 0.12, 2.3, 'gy'], [0, 0.25, 1.11, 0.06, 3.7, 0.03, 'bk'], [-0.35, 1.2, 1.13, 0.1, 1.6, 0.1, 'met'], [0.35, 1.2, 1.13, 0.1, 1.6, 0.1, 'met'], [1.3, 3.0, 1.11, 1.4, 0.5, 0.03, 'scr'], [-1.3, 3.0, 1.11, 1.4, 0.5, 0.03, 'bk']]; },
+  monitor: function (x, y, z) { return [[x, y, z - 0.1, 0.25, 0.3, 0.2, 'bk'], [x, y + 0.28, z, 1.6, 0.9, 0.07, 'bk'], [x, y + 0.33, z + 0.04, 1.5, 0.8, 0.03, 'scr']]; },
+  gdesk: function () { return P.table(5, 1.6, 0.85, 'bk').concat(P.monitor(-1.2, 0.85, -0.1), P.monitor(0.7, 0.85, -0.1), [[-0.2, 0.85, 0.55, 1.6, 0.05, 0.5, 'gy'], [2.0, 0.85, -0.3, 0.7, 1.5, 1.2, 'bk'], [2.0, 1.0, 0.31, 0.05, 1.1, 0.02, 'neon']]); },
+  tv: function () { return [[0, 0, 0, 5, 0.9, 1.2, 'wood'], [0, 0.9, 0, 0.8, 0.5, 0.4, 'bk'], [0, 1.4, 0, 4.6, 2.6, 0.12, 'bk'], [0, 1.5, 0.07, 4.4, 2.4, 0.03, 'scr'], [1.5, 0.9, 0.1, 0.8, 0.12, 0.5, 'gy']]; },
+  bean: function () { return [[0, 0, 0, 1.8, 0.8, 1.8, 'fab', 'c'], [0, 0.7, 0, 1.2, 0.3, 1.2, 'fab', 'c']]; },
+  arcade: function () { return [[0, 0, 0, 1.6, 0.3, 1.4, 'bk'], [0, 0.3, 0, 1.4, 1.4, 1.2, 'bk'], [0, 1.7, -0.1, 1.4, 1.1, 1.0, 'bk'], [0, 1.45, 0.62, 1.1, 0.9, 0.05, 'scr'], [0, 1.3, 0.75, 1.3, 0.12, 0.5, 'gy'], [-0.3, 1.42, 0.8, 0.08, 0.25, 0.08, 'wh', 'c'], [0.3, 1.42, 0.8, 0.12, 0.05, 0.12, 'wh', 'c'], [0, 2.8, -0.1, 1.4, 0.35, 1.0, 'neon']]; },
+  circle: function () { return [[0, 0, 0, 8, 0.03, 8, 'wh', 'c'], [0, 0.03, 0, 7.4, 0.03, 7.4, 'bk', 'c'], [0, 0.06, 0, 6, 0.03, 6, 'wh', 'c'], [0, 0.09, 0, 5.4, 0.03, 5.4, 'bk', 'c'], [0, 0.12, 0, 0.8, 0.05, 0.8, 'wh', 'c']]; },
+  safe: function () { return [[0, 0, 0, 2, 2.4, 1.6, 'gy'], [0, 0.2, 0.81, 1.6, 2, 0.04, 'bk'], [0.3, 1.1, 0.84, 0.4, 0.4, 0.05, 'met', 'c'], [-0.5, 1.5, 0.84, 0.1, 0.5, 0.05, 'wh']]; },
+  chest: function () { return [[0, 0, 0, 2.4, 1, 1.4, 'wood'], [0, 1, 0, 2.5, 0.2, 1.5, 'wood2'], [0, 0.5, 0.72, 0.3, 0.3, 0.06, 'met']]; }
 };
 
 function wall(p, w, y0, wh) {
@@ -223,7 +333,7 @@ function rooms(p, list, y0, up) {
   list.forEach(function (r) {
     const w = r[3] - r[1], d = r[4] - r[2];
     box(p, (r[1] + r[3]) / 2, y0 + 0.02, (r[2] + r[4]) / 2, w, 0.04, d, floorMat(r, w, d));
-    label(p, r[0], (r[1] + r[3]) / 2, y0 + (up ? 2.4 : 5), r[0] === 'SẢNH' ? 12 : (r[2] + r[4]) / 2, Math.min(7, w * 0.8));
+    label(p, r[0], (r[1] + r[3]) / 2, y0 + (up ? 2.4 : 5), r[0] === 'SẢNH' ? 14 : (r[2] + r[4]) / 2, Math.min(7, w * 0.8));
   });
 }
 function rail(p, x1, z1, x2, z2, y0) {
@@ -231,14 +341,15 @@ function rail(p, x1, z1, x2, z2, y0) {
   box(p, cx, y0 + RH / 2, cz, w, RH, d, RAIL); box(p, cx, y0 + RH + 0.05, cz, w + 0.1, 0.1, d + 0.1, CAP);
 }
 
-// Khung nhà
+// ===== KHUNG NHÀ =====
 rooms(G, RG, 0, false); WG.forEach(function (w) { wall(G, w, 0, WHG); });
 rooms(U, RU, F2, true); WU.forEach(function (w) { wall(U, w, F2, WHU); });
+RU.forEach(function (r) { box(CE, (r[1] + r[3]) / 2, UC + 0.1, (r[2] + r[4]) / 2, r[3] - r[1], 0.2, r[4] - r[2], M(0x0c0c0c, 1)); });   // trần tầng lầu (bấm C)
 const slab = function (x1, z1, x2, z2) { box(U, (x1 + x2) / 2, F2 - 0.1, (z1 + z2) / 2, x2 - x1, 0.2, z2 - z1, SL); };
 slab(0, 0, W, HZ); slab(0, HZ, CX - HH, D); slab(CX + HH, HZ, W, D);
 rail(U, CX - IN, HZ, CX + IN, HZ, F2); rail(U, CX - HH, HZ, CX - HH, D, F2); rail(U, CX + HH, HZ, CX + HH, D, F2);
 
-// Cầu thang đôi ở chính giữa nhà, bậc đen trắng xen kẽ
+// ===== CẦU THANG ĐÔI Ở CHÍNH GIỮA NHÀ, bậc đen trắng xen kẽ =====
 function flight(x0, z0, w, n, base) {
   for (let i = 0; i < n; i++) {
     const top = base + (i + 1) * RISE, cz = z0 - (i + 0.5) * RUN;
@@ -266,83 +377,147 @@ rail(B, CX - 8, LZ - LD / 2, CX + 8, LZ - LD / 2, LH);
 rail(B, CX - 8, LZ + LD / 2, CX - MW / 2, LZ + LD / 2, LH); rail(B, CX + MW / 2, LZ + LD / 2, CX + 8, LZ + LD / 2, LH);
 label(B, 'CẦU THANG ĐÔI', CX, F2 + 2, LZ, 5);
 
-// ================= NỘI THẤT =================
-// --- TẦNG TRỆT ---
-// Tủ sách ngay sau cầu thang (áp vào mặt sau chiếu nghỉ), thang trượt, đèn cây
+// ===== ĐÈN CHÙM sảnh: treo vào xà ngang giữa 2 cột =====
+const CHZ = 42;
+[CX - HH, CX + HH].forEach(function (x) { const col = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, UC - F2 + 0.05, 16), STW); col.position.set(x, F2 + (UC - F2) / 2, CHZ); col.castShadow = true; B.add(col); });
+box(B, CX, UC - 0.2, CHZ, 2 * HH + 1, 0.45, 0.6, IRON);
+const chand = chandelier(B, CX, UC - 2.8, CHZ);
+
+// ===== NỘI THẤT TẦNG TRỆT =====
+// Tủ sách ngay sau cầu thang, thang trượt thư viện, góc đọc sách
 put(G, GY, CX, LZ - LD / 2 - 0.45, Math.PI, P.shelf(10, 4.4, 0.8));
 put(G, GY, CX + 3.5, LZ - LD / 2 - 2, 0, P.ladder(), 0.2);
-put(G, GY, CX - 6.5, 22, 0, P.floorlamp());
-label(G, 'TỦ SÁCH SAU CẦU THANG', CX, 5.4, 22.5, 6);
-// Hành lang 1
-put(G, GY, 40, 4, 0, P.rug(72, 3, 'red'));
-[6, 16, 28, 52, 64, 74].forEach(function (x, i) { put(G, GY + 1.8, x, 0.22, 0, P.frame(1.4, 1.8, i % 2 ? 'gy' : 'wh')); });
-put(G, GY, 40, 1, 0, P.bench(4));
-// Sảnh: đồng hồ quả lắc có quả lắc đung đưa, bàn nến, tượng canh cửa, ghế dài
-const clk = put(G, GY, 20, 8.6, 0, P.clock());
+put(G, GY, CX - 6.5, 20, 0, P.floorlamp());
+put(G, GY, CX - 4, 17.5, 0, P.sofa(1.8, 'red'), 0, 1.2);
+put(G, GY, CX + 4.5, 17.5, 0, P.table(1.2, 1.2, 0.8, 'wood2')); put(G, GY + 0.8, CX + 4.5, 17.5, 0, P.candle());
+label(G, 'TỦ SÁCH SAU CẦU THANG', CX, 5.4, 21.5, 6);
+// Hành lang 1: thảm, tranh lớn, ghế dài
+put(G, GY, CX, 3.8, 0, P.rug(66, 3, 'red'));
+[6, 16, 26, 46, 56, 66].forEach(function (x, i) { painting(G, x, 4.6, 0.22, 0, 4.2, 3, i % 6); });
+put(G, GY, CX, 1.1, 0, P.bench(4));
+// Sảnh: đồng hồ quả lắc, tranh khổng lồ, bàn nến, tượng canh cửa, ghế dài, thảm đỏ
+const clk = put(G, GY, 16.5, GZ + 0.65, 0, P.clock());
 const pend = new THREE.Group(); pend.position.set(0, 3.3, 0.34);
 pend.add(mk(0.05, 1.5, 0.03, MT.met, 0, -0.75, 0)); pend.add(mk(0.3, 0.3, 0.04, MT.met, 0, -1.5, 0)); clk.add(pend);
-put(G, GY, 60, 8.75, 0, P.table(4, 0.9, 0.9, 'wood'));
-put(G, GY + 0.9, 59, 8.75, 0, P.candle()); put(G, GY + 0.9, 61, 8.75, 0, P.candle());
-put(G, GY + 1.9, 60, 8.2, 0, P.frame(2, 2.4, 'gy'));
-put(G, GY, CX - 6, 54.6, 0, P.stat('wh')); put(G, GY, CX + 6, 54.6, 0, P.stat('bk'));
-put(G, GY, 16.7, 40, Math.PI / 2, P.bench(4)); put(G, GY, 63.3, 40, -Math.PI / 2, P.bench(4));
-// Phòng khách: sofa, ghế bành đỏ, bàn trà, tủ kính, piano
-put(G, GY, 5.8, 24, 0, P.rug(8, 6, 'fab'));
-put(G, GY, 2.2, 24, Math.PI / 2, P.sofa(5, 'fab'));
-put(G, GY, 5.6, 24, 0, P.table(1.3, 2.6, 0.7, 'wood2'));
-put(G, GY, 9.4, 24, -Math.PI / 2, P.sofa(2.2, 'red'));
-put(G, GY + 1.9, 0.22, 24, Math.PI / 2, P.frame(3, 1.6, 'gy'));
-put(G, GY, 0.7, 38, Math.PI / 2, P.cab(3, 2.6)); put(G, GY, 0.7, 12, Math.PI / 2, P.cab(2.4, 2.2));
-put(G, GY, 8.5, 46, 0, P.piano());
+painting(G, 22.5, 5, GZ + 0.22, 0, 5, 3.6, 0);
+painting(G, 48.5, 5, GZ + 0.22, 0, 5, 3.6, 2);
+painting(G, CX, 6.2, D - 0.22, Math.PI, 7, 4.2, 5);
+painting(G, SW + 0.22, 5, 36, Math.PI / 2, 6, 4, 1);
+painting(G, W - SW - 0.22, 5, 36, -Math.PI / 2, 6, 4, 3);
+put(G, GY, 54.5, GZ + 0.9, 0, P.table(4, 0.9, 0.9, 'wood'));
+put(G, GY + 0.9, 53.4, GZ + 0.9, 0, P.candle()); put(G, GY + 0.9, 55.6, GZ + 0.9, 0, P.candle());
+painting(G, 54.5, 3.5, GZ + 0.22, 0, 2.6, 1.8, 4);
+put(G, GY, CX - 6, D - 1.6, 0, P.stat('wh')); put(G, GY, CX + 6, D - 1.6, 0, P.stat('bk'));
+put(G, GY, SW + 0.7, 46, Math.PI / 2, P.bench(4)); put(G, GY, W - SW - 0.7, 46, -Math.PI / 2, P.bench(4));
+put(G, GY, CX, 44, 0, P.rug(5.5, 15, 'red'));
+// Phòng khách: đồ nội thất phóng to, tranh lớn
+put(G, GY, 6.5, 22, 0, P.rug(11, 9, 'fab'));
+put(G, GY, 2.4, 22, Math.PI / 2, P.sofa(5, 'fab'), 0, 1.5);
+put(G, GY, 6.4, 22, 0, P.table(1.3, 2.6, 0.7, 'wood2'), 0, 1.6);
+put(G, GY, 10.8, 18.2, -Math.PI / 2, P.sofa(2.2, 'red'), 0, 1.5);
+put(G, GY, 10.8, 24.2, -Math.PI / 2, P.sofa(2.2, 'red'), 0, 1.5);
+put(G, GY, 0.9, 12, Math.PI / 2, P.cab(3, 2.6), 0, 1.4);
+put(G, GY, 0.9, 36, Math.PI / 2, P.cab(3.6, 2.6), 0, 1.4);
+put(G, GY, 8, 48.5, Math.PI, P.piano(), 0, 1.2);
+put(G, GY, 12.8, 14, 0, P.floorlamp(), 0, 1.4); put(G, GY, 1.2, 29, 0, P.floorlamp(), 0, 1.4);
+painting(G, 0.22, 6, 12, Math.PI / 2, 5, 3.4, 3);
+painting(G, 0.22, 5.5, 22, Math.PI / 2, 8, 4.8, 2);
+painting(G, 0.22, 6, 36, Math.PI / 2, 5, 3.4, 0);
+painting(G, 0.22, 5.5, 45, Math.PI / 2, 4, 3, 1);
+painting(G, SW - 0.22, 5.5, 16, -Math.PI / 2, 5, 3.4, 4);
+painting(G, SW - 0.22, 5.5, 40, -Math.PI / 2, 6, 4, 5);
 // Phòng kho: kệ kim loại, thùng gỗ, thùng phuy, bàn đặt chìa khóa
-[14, 22, 38, 46].forEach(function (z) { put(G, GY, 79.3, z, -Math.PI / 2, P.rack(6)); });
-put(G, GY, 66, 11, 0, P.crate(1.6)); put(G, GY, 67.8, 11, 0.3, P.crate(1.2));
-put(G, GY, 66.2, 52, 0, P.crate(1.5)); put(G, GY + 1.5, 66.2, 52, 0.2, P.crate(1.1));
-put(G, GY, 76, 52, 0, P.barrel()); put(G, GY, 77.2, 53.4, 0, P.barrel()); put(G, GY, 76.4, 54.4, 0, P.barrel());
+[14, 22, 38, 46].forEach(function (z) { put(G, GY, 71.3, z, -Math.PI / 2, P.rack(6)); });
+put(G, GY, 61, 10.5, 0, P.crate(1.6)); put(G, GY, 62.8, 10.5, 0.3, P.crate(1.2)); put(G, GY + 1.6, 61, 10.5, 0.2, P.crate(1.1));
+put(G, GY, 61, 49.5, 0, P.crate(1.5)); put(G, GY + 1.5, 61, 49.5, 0.2, P.crate(1.1));
+put(G, GY, 68.6, 50.6, 0, P.barrel()); put(G, GY, 67.4, 49.4, 0, P.barrel()); put(G, GY, 68.2, 48.8, 0, P.barrel());
 put(G, GY, KEY[0], KEY[1], 0, P.table(2.4, 1.2, 0.9, 'wood2')); put(G, GY, KEY[0], KEY[1] + 1.5, Math.PI, P.chair());
+painting(G, W - SW + 0.22, 5.5, 38, Math.PI / 2, 5, 3.4, 1);
 
-// --- TẦNG LẦU ---
-// Phòng ngủ
-put(U, UY, 7, 4.5, 0, P.rug(7, 6.5, 'red'));
-put(U, UY, 7, 3.3, 0, P.bed());
-put(U, UY, 3.9, 0.8, 0, P.nstand()); put(U, UY, 10.1, 0.8, 0, P.nstand());
-put(U, UY + 1.06, 3.9, 0.8, 0, P.lamp()); put(U, UY + 1.06, 10.1, 0.8, 0, P.lamp());
-put(U, UY, 0.8, 10, Math.PI / 2, P.wardrobe(3.4));
-put(U, UY, 24.7, 7, -Math.PI / 2, P.dresser());
-// Phòng bếp: quầy, tủ lạnh, đảo bếp, bàn ăn bày sẵn đĩa và nến
-put(U, UY, 41.5, 0.7, 0, [[0, 0, 0, 23, 1, 1.2, 'wood'], [0, 1, 0, 23.2, 0.1, 1.3, 'wh'], [-5, 1.1, 0, 1.8, 0.08, 0.9, 'bk'], [3, 1.1, 0, 2, 0.05, 0.9, 'met'], [0, 2.4, -0.25, 23, 0.9, 0.7, 'wood2']]);
-put(U, UY, 28.2, 1.2, 0, [[0, 0, 0, 1.8, 3.3, 1.5, 'wh'], [0.5, 1.4, 0.76, 0.06, 0.9, 0.03, 'met'], [0, 1.65, 0.76, 1.7, 0.03, 0.03, 'gy']]);
-put(U, UY, 47.5, 6.5, 0, [[0, 0, 0, 6, 1, 2.2, 'wood'], [0, 1, 0, 6.2, 0.1, 2.4, 'bk']]);
-put(U, UY, 31.5, 9.5, 0, P.table(6, 2.2, 0.85, 'wood2'));
-[[30.3, 7.9, 0], [32.7, 7.9, 0], [30.3, 11.1, Math.PI], [32.7, 11.1, Math.PI]].forEach(function (c) { put(U, UY, c[0], c[1], c[2], P.chair()); });
-[[30.3, 8.8], [32.7, 8.8], [30.3, 10.2], [32.7, 10.2]].forEach(function (c) { put(U, UY + 0.85, c[0], c[1], 0, [[0, 0, 0, 0.6, 0.04, 0.6, 'wh', 'c']]); });
-put(U, UY + 0.85, 31.5, 9.5, 0, P.candle());
-// Thư viện
-[58, 66, 74].forEach(function (x) { put(U, UY, x, 0.55, 0, P.shelf(7.5, 3.8, 0.8)); });
-put(U, UY, 79.4, 7, -Math.PI / 2, P.shelf(8, 3.8, 0.8));
-put(U, UY, 66, 9, 0, P.table(3, 1.4, 0.9, 'wood')); put(U, UY, 66, 10.4, Math.PI, P.chair());
-put(U, UY + 0.9, 65, 9, 0, P.lamp()); put(U, UY, 58, 9, Math.PI / 2, P.sofa(2.4, 'red'));
-// Hành lang 2 và ban công
-put(U, UY, 40, 17.2, 0, P.rug(76, 2.4, 'red'));
-[20, 60].forEach(function (x) { put(U, UY, x, 14.8, 0, P.table(1.2, 0.6, 0.9, 'wood2')); put(U, UY + 0.9, x, 14.8, 0, [[0, 0, 0, 0.35, 0.6, 0.35, 'wh', 'c']]); });
-[5, 20, 30, 50, 60, 75].forEach(function (x, i) { put(U, UY + 1.8, x, 14.22, 0, P.frame(1.3, 1.7, i % 2 ? 'wh' : 'gy')); });
-[28, 38, 48].forEach(function (z) { put(U, UY, 16.7, z, Math.PI / 2, P.bench(3.2)); put(U, UY, 63.3, z, -Math.PI / 2, P.bench(3.2)); });
-// Phòng tắm
-put(U, UY, 3.3, 25.5, 0, P.bath());
-put(U, UY, 12.5, 21.2, 0, [[0, 0, 0, 1.8, 0.9, 1.2, 'wh'], [0, 0.9, 0, 1.4, 0.05, 0.8, 'met'], [0, 1.5, -0.55, 1.8, 1.7, 0.05, 'gl']]);
-put(U, UY, 14.6, 26, -Math.PI / 2, P.toilet());
-// Phòng trẻ em: nôi có chuông xoay, ghế bập bênh, giường nhỏ, đồ chơi
-put(U, UY, 72, 28, 0, P.rug(8, 6, 'fab'));
-put(U, UY, 77.5, 26, 0, P.crib());
-const mob = new THREE.Group(); mob.position.set(77.5, UY + 3, 26);
+// ===== NỘI THẤT TẦNG LẦU =====
+// Phòng ngủ: 2 giường, 3 tủ đầu giường, tủ áo, bàn trang điểm
+put(U, UY, 10, 6, 0, P.rug(13, 7, 'red'));
+put(U, UY, 5, 3.1, 0, P.bed()); put(U, UY, 15, 3.1, 0, P.bed());
+[1.3, 10, 19.4].forEach(function (x) { put(U, UY, x, 0.8, 0, P.nstand()); put(U, UY + 1.06, x, 0.8, 0, P.lamp()); });
+put(U, UY, 25.2, 8, -Math.PI / 2, P.wardrobe(3.4));
+put(U, UY, 0.8, 8, Math.PI / 2, P.dresser());
+painting(U, 10, UY + 2.7, 0.22, 0, 3.6, 1.6, 2);
+// Phòng bếp: quầy, tủ đông khổng lồ, bàn ăn to 8 ghế bày đĩa và nến
+put(U, UY, 35, 0.8, 0, P.counter(16));
+put(U, UY, 47.5, 1.3, 0, P.freezer());
+put(U, UY, 38.5, 7, 0, P.table(9, 2.4, 0.9, 'wood2'));
+[35.5, 38.5, 41.5].forEach(function (x) {
+  put(U, UY, x, 4.6, 0, P.chair()); put(U, UY, x, 9.4, Math.PI, P.chair());
+  put(U, UY + 0.9, x, 6.2, 0, [[0, 0, 0, 0.6, 0.04, 0.6, 'wh', 'c']]); put(U, UY + 0.9, x, 7.8, 0, [[0, 0, 0, 0.6, 0.04, 0.6, 'wh', 'c']]);
+});
+put(U, UY, 33.2, 7, Math.PI / 2, P.chair()); put(U, UY, 43.8, 7, -Math.PI / 2, P.chair());
+put(U, UY + 0.9, 38.5, 7, 0, P.candle());
+// Thư viện: tủ sách quanh tường, bàn đọc, sofa
+[54.5, 61.5, 68.5].forEach(function (x) { put(U, UY, x, 0.55, 0, P.shelf(6.6, 3.8, 0.8)); });
+put(U, UY, 62, 8, 0, P.table(3, 1.4, 0.9, 'wood')); put(U, UY, 62, 9.6, Math.PI, P.chair());
+put(U, UY + 0.9, 61, 8, 0, P.lamp()); put(U, UY, 51.2, 8, Math.PI / 2, P.sofa(2.6, 'red'));
+painting(U, 54.5, UY + 2.3, NZ - 0.22, Math.PI, 3.4, 2.2, 3);
+painting(U, W - 0.22, UY + 2.3, 6, -Math.PI / 2, 4, 2.4, 0);
+// Hành lang 2: thảm, bàn đặt bình hoa, tranh
+put(U, UY, CX, 15.2, 0, P.rug(66, 2.2, 'red'));
+[22, 50].forEach(function (x) { put(U, UY, x, 12.55, 0, P.table(1.4, 0.6, 0.9, 'wood2')); put(U, UY + 0.9, x, 12.55, 0, [[0, 0, 0, 0.35, 0.6, 0.35, 'wh', 'c']]); });
+[[5, 0], [22, 4], [38, 2], [50, 1], [66, 5]].forEach(function (a) { painting(U, a[0], UY + 2.3, NZ + 0.22, 0, 3.2, 2, a[1]); });
+// Ban công: ghế dài (không chắn các cửa)
+[26.4, 35.5, 46].forEach(function (z) { put(U, UY, SW + 0.9, z, Math.PI / 2, P.bench(3.2)); });
+[29, 38, 46].forEach(function (z) { put(U, UY, W - SW - 0.9, z, -Math.PI / 2, P.bench(3.2)); });
+// Phòng tắm 1: bồn tắm, bồn rửa, bồn cầu
+put(U, UY, 3.4, HZ + 1.5, 0, P.bath());
+put(U, UY, 5, T1 - 0.7, Math.PI, P.sink());
+put(U, UY, 11, T1 - 0.9, Math.PI, P.toilet());
+// Phòng tắm 2: buồng tắm kính, bồn rửa, bồn cầu
+put(U, UY, 1.6, T1 + 1.6, 0, P.shower());
+put(U, UY, 7, T1 + 0.7, 0, P.sink());
+put(U, UY, 11, T2 - 0.9, Math.PI, P.toilet());
+// Phòng game riêng: bàn 2 màn hình, tivi lớn, túi lười, 2 máy arcade, đèn neon
+put(U, UY, 5, 35.4, 0, P.gdesk()); put(U, UY, 5, 37.4, Math.PI, P.chair());
+put(U, UY, 1.3, 43.4, Math.PI / 2, P.tv());
+put(U, UY, 6.5, 43.4, 0, P.bean()); put(U, UY, 8.4, 40.9, 0, P.bean()); put(U, UY, 8.4, 46, 0, P.bean());
+put(U, UY, 3, 50.6, Math.PI, P.arcade()); put(U, UY, 5.4, 50.6, Math.PI, P.arcade());
+box(U, 7, UY + 3.7, T2 + 0.3, 12, 0.1, 0.1, MT.neon);
+painting(U, SW - 0.22, UY + 2.2, 46, -Math.PI / 2, 4, 2.6, 4);
+// Phòng trẻ em: nôi (chuông xoay), ghế bập bênh, giường nhỏ, hòm đồ chơi, kệ sách che cửa bí mật
+put(U, UY, 65, 27, 0, P.rug(8, 6, 'fab'));
+put(U, UY, 70.7, 28, 0, P.crib());
+const mob = new THREE.Group(); mob.position.set(70.7, UY + 3, 28);
 mob.add(mk(0.02, 1, 0.02, MT.met, 0, 0.5, 0)); mob.add(mk(1, 0.03, 0.03, MT.met, 0, 0, 0)); mob.add(mk(0.03, 0.03, 1, MT.met, 0, 0, 0));
 [[0.5, 0], [-0.5, 0], [0, 0.5], [0, -0.5]].forEach(function (a, i) { mob.add(mk(0.02, 0.4, 0.02, MT.met, a[0], -0.2, a[1])); mob.add(mk(0.25, 0.25, 0.25, i % 2 ? MT.wh : MT.bk, a[0], -0.5, a[1])); });
 U.add(mob);
-const rocker = put(U, UY, 70, 34, 0, P.rocker());
-put(U, UY, 66.5, 22.5, 0, [[0, 0, 0, 1.8, 0.8, 1.1, 'wood2'], [0, 0.8, 0, 1.9, 0.06, 1.2, 'wood']]);
-put(U, UY, 69, 22.5, 0, [[0, 0, 0, 0.4, 0.4, 0.4, 'wh'], [0.45, 0, 0.1, 0.4, 0.4, 0.4, 'bk'], [0.2, 0.4, 0, 0.4, 0.4, 0.4, 'gy']]);
-put(U, UY, 67, 40, 0, [[0, 0, 0, 2, 0.4, 3.8, 'wood'], [0, 0.4, 0, 1.8, 0.25, 3.6, 'wh'], [0, 0, -1.9, 2, 1.1, 0.12, 'wood']]);
-put(U, UY, 64.45, 34, Math.PI / 2, P.shelf(3, 2.2, 0.6));
+const rocker = put(U, UY, 63, 29, 0, P.rocker());
+put(U, UY, 59.6, 32.8, 0, [[0, 0, 0, 1.8, 0.8, 1.1, 'wood2'], [0, 0.8, 0, 1.9, 0.06, 1.2, 'wood']]);
+put(U, UY + 0.8, 59.2, 32.8, 0, [[0, 0, 0, 0.4, 0.4, 0.4, 'wh'], [0.45, 0, 0.1, 0.4, 0.4, 0.4, 'bk'], [0.2, 0.4, 0, 0.4, 0.4, 0.4, 'gy']]);
+put(U, UY, 67.4, 20.7, 0, [[0, 0, 0, 2, 0.4, 3.8, 'wood'], [0, 0.4, 0, 1.8, 0.25, 3.6, 'wh'], [0, 0, -1.9, 2, 1.1, 0.12, 'wood']]);
+put(U, UY, 65.5, KS - 0.55, Math.PI, P.shelf(4.4, 3.6, 0.8));   // kệ sách = cửa bí mật
+label(U, 'KỆ SÁCH = CỬA BÍ MẬT', 65.5, UY + 4.6, KS - 1, 4.5);
+painting(U, W - 0.22, UY + 2.8, 22, -Math.PI / 2, 3, 1.5, 0);
+// Phòng bí mật: vòng tròn trên sàn, nến, két sắt, kệ lọ, rương, ghế trẻ em quay mặt vào tường
+put(U, UY, 65, 43.5, 0, P.circle());
+[[60.6, 43.5], [69.4, 43.5], [65, 39.1], [65, 47.9]].forEach(function (c) { put(U, UY, c[0], c[1], 0, P.candle(), 0, 1.3); });
+put(U, UY, 71, 40, -Math.PI / 2, P.safe());
+put(U, UY, 71.3, 47, -Math.PI / 2, P.jars(5));
+put(U, UY, 60.5, 50.7, Math.PI, P.chest());
+put(U, UY, 67.5, 50.4, Math.PI, P.table(3, 1.2, 0.9, 'wood2')); put(U, UY + 0.9, 67.5, 50.4, 0, P.candle());
+put(U, UY, 59.4, 43.5, -Math.PI / 2, P.chair(), 0, 0.8);
+painting(U, 65, UY + 2.2, D - 0.22, Math.PI, 4.2, 2.6, 1);
+painting(U, W - SW + 0.22, UY + 2.4, 40, Math.PI / 2, 3.4, 2, 3);
+
+// ===== ĐÈN TRONG TỪNG PHÒNG =====
+lamp(G, CX, F2 - 0.2, 3.2, 3.5, 0xdde4ff, 1.2, 46);      // hành lang 1
+lamp(G, 7, F2 - 0.2, 3.4, 28, 0xffe3b8, 1.2, 36);        // phòng khách
+lamp(G, 65, F2 - 0.2, 3.4, 30, 0xdde4ff, 1.0, 28);       // kho
+lamp(U, 13, UC, 1.4, 6, 0xffe0b0, 1.0, 22);              // phòng ngủ
+lamp(U, 38.5, UC, 1.4, 7, 0xffe0b0, 1.1, 24, true);      // bếp (bàn ăn)
+lamp(U, 61, UC, 1.4, 6, 0xffe0b0, 1.0, 22);              // thư viện
+lamp(U, CX, UC, 1.4, 15.2, 0xdde4ff, 0.9, 44);           // hành lang 2
+lamp(U, 7, UC, 1.2, HZ + 4, 0xeef4ff, 0.8, 18);          // tắm 1
+lamp(U, 7, UC, 1.2, T1 + 4, 0xeef4ff, 0.8, 18);          // tắm 2
+lamp(U, 7, UC, 1.2, 43, 0xcfe2ff, 0.9, 22);              // phòng game
+lamp(U, 65, UC, 1.4, 27, 0xffe6c0, 0.9, 22);             // trẻ em
+lamp(U, 65, UC, 1.6, 43.5, 0xb8c4ff, 0.7, 20, true);     // phòng bí mật
 
 // Cửa chính (thoát hiểm), chìa khóa, pin
 box(G, EXIT[0], DH / 2, EXIT[1], 4, DH, 0.25, M(0x4a0808, 0.6));
@@ -354,16 +529,16 @@ function showFloors(n) { G.visible = n !== 2; U.visible = n !== 1; $('fl').textC
 showFloors(3);
 let labelsOn = true, bright = true;
 
-// Camera: nhìn từ trên xuống / bay tự do
-const keys = {}; let tx = CX, tz = D / 2, h = 105, mode = 'top', yaw = 0, pitch = -0.9, speed = 16, drag = false;
+// ===== CAMERA: nhìn từ trên xuống / bay tự do =====
+const keys = {}; let tx = CX, tz = D / 2, h = 95, mode = 'top', yaw = 0, pitch = -0.9, speed = 16, drag = false;
 const fpos = new THREE.Vector3(), dom = renderer.domElement;
 const HELP = {
   top: '<kbd>W A S D</kbd> kéo bản đồ &nbsp; <kbd>Q</kbd>/<kbd>E</kbd> phóng to / thu nhỏ',
-  fly: 'Bấm vào màn hình để khóa chuột (<kbd>Esc</kbd> nhả) hoặc giữ chuột để xoay<br><kbd>W A S D</kbd> bay &nbsp; <kbd>Space</kbd> lên &nbsp; <kbd>Shift</kbd> xuống &nbsp; <kbd>Z</kbd>/<kbd>X</kbd> chậm / nhanh<br><kbd>B</kbd> tủ sách sau cầu thang &nbsp; <kbd>H</kbd> cửa chính &nbsp; <kbd>G</kbd> hành lang 2 nhìn xuống &nbsp; <kbd>Y</kbd> hành lang 2 &nbsp; <kbd>T</kbd> hành lang 1'
+  fly: 'Bấm vào màn hình để khóa chuột (<kbd>Esc</kbd> nhả) hoặc giữ chuột để xoay<br><kbd>W A S D</kbd> bay &nbsp; <kbd>Space</kbd> lên &nbsp; <kbd>Shift</kbd> xuống &nbsp; <kbd>Z</kbd>/<kbd>X</kbd> chậm / nhanh<br><kbd>B</kbd> tủ sách &nbsp; <kbd>H</kbd> cửa chính &nbsp; <kbd>N</kbd> đèn chùm &nbsp; <kbd>G</kbd> hành lang 2 nhìn xuống &nbsp; <kbd>Y</kbd> hành lang 2 &nbsp; <kbd>T</kbd> hành lang 1 &nbsp; <kbd>O</kbd> phòng game &nbsp; <kbd>J</kbd> phòng bí mật'
 };
 function setMode(m) {
   mode = m;
-  if (m === 'fly') { camera.up.set(0, 1, 0); camera.fov = 70; camera.rotation.order = 'YXZ'; fpos.set(tx, 48, tz + 42); yaw = 0; pitch = -0.9; }
+  if (m === 'fly') { camera.up.set(0, 1, 0); camera.fov = 70; camera.rotation.order = 'YXZ'; fpos.set(tx, 42, tz + 38); yaw = 0; pitch = -0.9; }
   else { camera.up.set(0, 0, -1); camera.fov = 50; if (document.pointerLockElement) document.exitPointerLock(); }
   camera.updateProjectionMatrix();
   $('mode').textContent = m === 'fly' ? 'BAY TỰ DO' : 'NHÌN TỪ TRÊN';
@@ -383,15 +558,19 @@ addEventListener('keydown', function (e) {
   if (e.code === 'Digit1') showFloors(1);
   if (e.code === 'Digit2') showFloors(2);
   if (e.code === 'Digit3') showFloors(3);
+  if (e.code === 'KeyC') CE.visible = !CE.visible;
   if (e.code === 'KeyK') { ri = (ri + 1) % 3; setRes(); st('Độ phân giải x' + RATIOS[ri]); }
   if (e.code === 'KeyL') { labelsOn = !labelsOn; scene.traverse(function (o) { if (o.userData.label) o.visible = labelsOn; }); }
-  if (e.code === 'KeyF') { bright = !bright; amb.intensity = bright ? 0.24 : 0.04; sun.intensity = bright ? 0.5 : 0; hemi.intensity = bright ? 0.25 : 0.03; PL.forEach(function (l) { l.visible = bright; }); }
+  if (e.code === 'KeyF') { bright = !bright; amb.intensity = bright ? 0.26 : 0.04; sun.intensity = bright ? 0.45 : 0; hemi.intensity = bright ? 0.25 : 0.03; LT.forEach(function (o) { o.l.visible = bright; }); }
   if (mode === 'fly') {
-    if (e.code === 'KeyT') { fpos.set(2, 1.6, 4); yaw = -Math.PI / 2; pitch = 0; showFloors(1); }
+    if (e.code === 'KeyT') { fpos.set(2, 1.6, 3.5); yaw = -Math.PI / 2; pitch = 0; showFloors(1); }
     if (e.code === 'KeyH') { fpos.set(CX, 1.6, D - 1.5); yaw = 0; pitch = 0.3; showFloors(3); }
-    if (e.code === 'KeyB') { fpos.set(CX, 2, 14); yaw = Math.PI; pitch = 0.1; showFloors(1); }
+    if (e.code === 'KeyB') { fpos.set(CX, 2, 12); yaw = Math.PI; pitch = 0.1; showFloors(1); }
+    if (e.code === 'KeyN') { fpos.set(CX - HH + 2.5, F2 + 1.6, CHZ); yaw = -Math.PI / 2; pitch = 0.05; showFloors(3); }
     if (e.code === 'KeyG') { fpos.set(CX, F2 + 1.6, HZ - 2.5); yaw = Math.PI; pitch = -0.35; showFloors(3); }
     if (e.code === 'KeyY') { fpos.set(2, F2 + 1.6, (NZ + HZ) / 2); yaw = -Math.PI / 2; pitch = 0; showFloors(2); }
+    if (e.code === 'KeyO') { fpos.set(12.5, F2 + 1.6, T2 + 2); yaw = Math.PI / 2 + 0.35; pitch = -0.1; showFloors(2); }
+    if (e.code === 'KeyJ') { fpos.set(70.5, F2 + 1.6, KS + 2); yaw = 2.5; pitch = -0.1; showFloors(2); }
     if (e.code === 'KeyZ') speed = Math.max(2, speed / 1.4);
     if (e.code === 'KeyX') speed = Math.min(120, speed * 1.4);
     if (e.code === 'Space') e.preventDefault();
@@ -403,11 +582,11 @@ const clock = new THREE.Clock(); let tt = 0;
 (function loop() {
   requestAnimationFrame(loop);
   const dt = Math.min(clock.getDelta(), 0.05); tt += dt;
-  pend.rotation.z = Math.sin(tt * 3) * 0.28;            // quả lắc
+  pend.rotation.z = Math.sin(tt * 3) * 0.28;            // quả lắc đồng hồ
   rocker.rotation.x = Math.sin(tt * 1.6) * 0.07;        // ghế bập bênh
   mob.rotation.y += dt * 0.4;                           // chuông trên nôi
-  if (bright && Math.random() < 0.1) chand.intensity = 1.0 + Math.random() * 0.6;
-  if (bright && Math.random() < 0.15) cl.intensity = 0.6 + Math.random() * 0.5;
+  chand.rotation.y += dt * 0.08;                        // đèn chùm xoay nhẹ
+  if (bright) LT.forEach(function (o) { if (o.flick && Math.random() < 0.1) o.l.intensity = o.base * (0.65 + Math.random() * 0.5); });
   if (mode === 'top') {
     const s = h * 0.012;
     if (keys.KeyW) tz -= s; if (keys.KeyS) tz += s;
