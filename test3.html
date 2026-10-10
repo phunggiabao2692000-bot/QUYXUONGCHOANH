@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Test 3D</title>
+<style>
+  body{margin:0;background:#000;color:#fff;font:16px sans-serif}
+  #log{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.8);padding:10px;line-height:1.7}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<div id="log"></div>
+<script>
+const log = (t, ok) => {
+  const d = document.createElement('div'); d.textContent = t;
+  d.style.color = ok === false ? '#f66' : '#8f8';
+  document.getElementById('log').appendChild(d);
+};
+addEventListener('error', e => log('LỖI: ' + e.message + ' (dòng ' + e.lineno + ')', false));
+try {
+  log(typeof THREE !== 'undefined' ? '1. Three.js đã tải: OK' : '1. Three.js CHƯA tải', typeof THREE !== 'undefined');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, .1, 100);
+  camera.position.z = 4;
+  log('2. Tạo scene + camera: OK');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(innerWidth, innerHeight);
+  document.body.appendChild(renderer.domElement);
+  log('3. Tạo renderer (WebGL): OK');
+  const cube = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xff9933 }));
+  scene.add(cube);
+  log('4. Thêm khối cam: OK. Nếu thấy khối cam đang xoay thì 3D chạy tốt.');
+  (function loop() {
+    requestAnimationFrame(loop);
+    cube.rotation.x += .01; cube.rotation.y += .02;
+    renderer.render(scene, camera);
+  })();
+} catch (e) { log('LỖI: ' + e.message, false); }
+</script>
+</body></html>
