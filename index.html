@@ -9,13 +9,21 @@
   #info b.c{display:inline-block;width:12px;height:12px;margin-right:6px;vertical-align:middle}
   #mode,#fl{color:#ffd700;font-weight:700}
   kbd{background:#333;border:1px solid #666;border-radius:3px;padding:0 5px;font-size:12px}
-  #err{display:none;position:fixed;left:0;right:0;bottom:0;background:#b00;color:#fff;padding:10px 14px}
+  #err{display:none;position:fixed;left:0;right:0;top:0;z-index:99;background:#b00;color:#fff;padding:10px 14px;font-size:15px}
 </style>
+<script>
+addEventListener('error', function (e) {
+  var b = document.getElementById('err');
+  if (b) { b.textContent = 'Lỗi: ' + e.message + ' (dòng ' + e.lineno + ')'; b.style.display = 'block'; }
+});
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
+<div id="err"></div>
 <div id="info">
-  <div><b>Bản: nhà 80x56m, có phòng bếp, thang cao x3</b></div>
+  <div><b>Nhà 80x56m, có phòng bếp, tầng lầu cao 9.6m</b></div>
+  <div id="st" style="color:#8f8">Đang dựng...</div>
   <div>Chế độ: <span id="mode"></span> (<kbd>V</kbd> đổi) &nbsp; Đang xem: <span id="fl"></span></div>
   <div><kbd>1</kbd> tầng trệt &nbsp; <kbd>2</kbd> tầng lầu &nbsp; <kbd>3</kbd> cả hai &nbsp; <kbd>L</kbd> tên phòng</div>
   <div><b class="c" style="background:#ffd700"></b>Chìa khóa (kho) &nbsp; <b class="c" style="background:#33ff66"></b>Pin (4) &nbsp; <b class="c" style="background:#8b4513"></b>Cửa chính</div>
@@ -24,69 +32,71 @@
   <div id="help"></div>
   <div><kbd>F</kbd> sáng / tối</div>
 </div>
-<div id="err"></div>
 
 <script>
+(function () {
 const $ = id => document.getElementById(id);
+const errs = [];
+function fail(name, e) {
+  errs.push(name + ': ' + e.message);
+  const b = $('err'); b.textContent = 'Lỗi ở bước [' + errs.join(' | ') + ']'; b.style.display = 'block';
+  $('st').textContent = 'CÓ LỖI'; $('st').style.color = '#f66'; console.error(name, e);
+}
+const step = (name, fn) => { try { fn(); } catch (e) { fail(name, e); } };
+
+function main() {
 try {
 // =====================================================
-//  BẢN ĐỒ NHÀ KIỂU DINH THỰ - đơn vị mét
-//  x chạy sang phải (đông), z chạy xuống (nam). Nhà rộng W x dài D.
+//  BẢN ĐỒ NHÀ - đơn vị mét. x sang phải (đông), z xuống (nam).
 //  Cửa chính ở tường nam (z = D), giữa nhà (x = CX).
 // =====================================================
-const W = 80, D = 56, CX = W / 2;       // <<< CHỈNH KÍCH THƯỚC NHÀ Ở ĐÂY
-const HEIGHT_MULT = 3;                  // <<< độ cao tầng lầu gấp mấy lần bình thường (3.2m)
-const FLOOR2 = 3.2 * HEIGHT_MULT;       // độ cao mặt sàn tầng lầu (= 9.6m)
-const WT = 0.3, WHG = FLOOR2 - 0.2, WHU = 4.0, DOOR_H = 3.0; // WHG: tường tầng trệt | WHU: tường tầng lầu
+const W = 80, D = 56, CX = W / 2;       // <<< kích thước nhà
+const HEIGHT_MULT = 3;                  // <<< độ cao tầng lầu gấp mấy lần 3.2m
+const FLOOR2 = 3.2 * HEIGHT_MULT;       // mặt sàn tầng lầu (9.6m)
+const WT = 0.3, WHG = FLOOR2 - 0.2, WHU = 4.0, DOOR_H = 3.0;
 
-// CẦU THANG ĐÔI VÒNG CUNG
-//  Thang giữa: rộng 8m, từ z = D-4 đi lên phía bắc (24 bậc, lên 4.8m) tới chiếu nghỉ rộng 16m x sâu 6m
-//  2 thang cung: quay 1/4 vòng ra ngoài rồi chạy lên phía bắc (24 bậc, tới FLOOR2), đổ vào hành lang 2
+// Cầu thang đôi vòng cung: thang giữa rộng 8m lên chiếu nghỉ (nửa độ cao), rồi 2 thang cung uốn ra 2 bên lên tầng lầu
 const STEPS = 24, RISE = (FLOOR2 / 2) / STEPS, RUN = 0.4, RAIL_H = 1.0;
 const FLIGHT_Z0 = D - 4, MID_W = 8;
-const LAND_Z = FLIGHT_Z0 - STEPS * RUN - 3;                    // giữa chiếu nghỉ
-const ARC_R = 8, ARC_W = 5, ARC_CZ = LAND_Z - ARC_R;           // tâm cung (z)
-const LAND_H = FLOOR2 / 2;                                     // độ cao chiếu nghỉ
-const HZ = ARC_CZ;                                             // mép bắc lỗ cầu thang = đầu hành lang tầng lầu
-const HOLE_HALF = 8 + ARC_R + ARC_W / 2;                       // nửa bề rộng lỗ cầu thang (=18.5)
+const LAND_Z = FLIGHT_Z0 - STEPS * RUN - 3, LAND_H = FLOOR2 / 2;
+const ARC_R = 8, ARC_W = 5, ARC_CZ = LAND_Z - ARC_R;
+const HZ = ARC_CZ, HOLE_HALF = 8 + ARC_R + ARC_W / 2;   // mép bắc lỗ cầu thang, nửa bề rộng lỗ
 
 // Phòng: [tên, x1, z1, x2, z2, màu sàn]
 const ROOMS_G = [
-  ['HÀNH LANG 1',  0,  0, W,  8, 0x555555],
-  ['PHÒNG KHÁCH',  0,  8, 16, D, 0x6b3a2a],
-  ['SẢNH',        16,  8, W - 16, D, 0x3a5a3a],
-  ['PHÒNG KHO',   W - 16, 8, W, D, 0x8a7a4a],
+  ['HÀNH LANG 1', 0, 0, W, 8, 0x555555],
+  ['PHÒNG KHÁCH', 0, 8, 16, D, 0x6b3a2a],
+  ['SẢNH', 16, 8, W - 16, D, 0x3a5a3a],
+  ['PHÒNG KHO', W - 16, 8, W, D, 0x8a7a4a],
 ];
 const ROOMS_U = [
-  ['PHÒNG NGỦ',        0,  0, 26, 22, 0x2f4a6b],
-  ['PHÒNG BẾP',       26,  0, 54, 22, 0x8a5a3a],       // <<< thay cho phòng làm việc
-  ['THƯ VIỆN',        54,  0, W, 22, 0x6b5a3a],
-  ['HÀNH LANG 2',      0, 22, W, HZ, 0x666666],
-  ['PHÒNG TẮM',        0, HZ, 16, D, 0x4a6a6a],
-  ['BAN CÔNG TÂY',    16, HZ, CX - HOLE_HALF, D, 0x777777],
-  ['BAN CÔNG ĐÔNG',   CX + HOLE_HALF, HZ, W - 16, D, 0x777777],
-  ['PHÒNG TRẺ EM',    W - 16, HZ, W, D, 0x6a4a5a],
+  ['PHÒNG NGỦ', 0, 0, 26, 22, 0x2f4a6b],
+  ['PHÒNG BẾP', 26, 0, 54, 22, 0x8a5a3a],
+  ['THƯ VIỆN', 54, 0, W, 22, 0x6b5a3a],
+  ['HÀNH LANG 2', 0, 22, W, HZ, 0x666666],
+  ['PHÒNG TẮM', 0, HZ, 16, D, 0x4a6a6a],
+  ['BAN CÔNG TÂY', 16, HZ, CX - HOLE_HALF, D, 0x777777],
+  ['BAN CÔNG ĐÔNG', CX + HOLE_HALF, HZ, W - 16, D, 0x777777],
+  ['PHÒNG TRẺ EM', W - 16, HZ, W, D, 0x6a4a5a],
 ];
-
-// Tường: [hướng, từ, đến, vị trí cố định, [cửa [bắt đầu, kết thúc]]]  ('x' = chạy ngang, 'z' = chạy dọc; cửa xếp từ nhỏ đến lớn)
+// Tường: [hướng, từ, đến, vị trí cố định, [cửa [bắt đầu, kết thúc]]] ('x' chạy ngang, 'z' chạy dọc; cửa xếp từ nhỏ đến lớn)
 const WALLS_G = [
-  ['x', 0, W, 0, []], ['x', 0, W, D, [[CX - 2, CX + 2]]],          // tường nam chừa cửa chính
+  ['x', 0, W, 0, []], ['x', 0, W, D, [[CX - 2, CX + 2]]],
   ['z', 0, D, 0, []], ['z', 0, D, W, []],
-  ['x', 0, W, 8, [[6, 9], [CX - 8, CX + 8], [W - 9, W - 6]]],       // hành lang 1 -> khách | sảnh (cổng vòm) | kho
-  ['z', 8, D, 16, [[30, 33]]], ['z', 8, D, W - 16, [[30, 33]]],    // khách <-> sảnh <-> kho
+  ['x', 0, W, 8, [[6, 9], [CX - 8, CX + 8], [W - 9, W - 6]]],
+  ['z', 8, D, 16, [[30, 33]]], ['z', 8, D, W - 16, [[30, 33]]],
 ];
 const WALLS_U = [
   ['x', 0, W, 0, []], ['x', 0, W, D, []],
   ['z', 0, D, 0, []], ['z', 0, D, W, []],
-  ['x', 0, W, 22, [[11.5, 14.5], [38.5, 41.5], [65.5, 68.5]]],      // hành lang 2 -> ngủ | bếp | thư viện
+  ['x', 0, W, 22, [[11.5, 14.5], [38.5, 41.5], [65.5, 68.5]]],
   ['z', 0, 22, 26, []], ['z', 0, 22, 54, []],
-  ['x', 0, 16, HZ, [[6.5, 9.5]]], ['x', W - 16, W, HZ, [[W - 9.5, W - 6.5]]], // hành lang 2 -> tắm | trẻ em
+  ['x', 0, 16, HZ, [[6.5, 9.5]]], ['x', W - 16, W, HZ, [[W - 9.5, W - 6.5]]],
   ['z', HZ, D, 16, []], ['z', HZ, D, W - 16, []],
 ];
-
-const KEY_POS  = [W - 8, 30];                                      // chìa khóa (phòng kho)
-const BAT_POS  = [[8, 24, 0], [CX, 4, 0], [W - 8, 48, 0], [8, 12, FLOOR2]]; // [x, z, độ cao sàn]
-const EXIT_POS = [CX, D];                                          // cửa chính
+const KEY_POS = [W - 8, 30];                                         // chìa khóa (phòng kho)
+const BAT_POS = [[8, 24, 0], [CX, 4, 0], [W - 8, 48, 0], [8, 12, FLOOR2]]; // pin: [x, z, độ cao sàn]
+const EXIT_POS = [CX, D];                                            // cửa chính
 // =====================================================
 //  HẾT PHẦN BẢN ĐỒ
 // =====================================================
@@ -101,4 +111,59 @@ addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; cam
 const amb = new THREE.AmbientLight(0xffffff, 0.85); scene.add(amb);
 const sun = new THREE.DirectionalLight(0xffffff, 0.6); sun.position.set(40, 120, 20); scene.add(sun);
 
-const G = new
+const G = new THREE.Group(), U = new THREE.Group(), B = new THREE.Group(); // tầng trệt, tầng lầu, chung
+scene.add(G); scene.add(U); scene.add(B);
+const MAT = (c, r) => new THREE.MeshStandardMaterial({ color: c, roughness: r === undefined ? .9 : r });
+const WALL = MAT(0x7a6a5e), RAILMAT = MAT(0xaa8844, .6), CARPET = MAT(0x8b1a1a, 1);
+
+function box(p, x, y, z, w, h, d, mat) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z); p.add(m); return m;
+}
+function wall(p, w, y0, wh) {
+  const axis = w[0], a = w[1], b = w[2], f = w[3], doors = w[4], segs = []; let pos = a;
+  doors.forEach(d => { if (d[0] > pos) segs.push([pos, d[0]]); pos = d[1]; });
+  if (pos < b) segs.push([pos, b]);
+  const put = (s, e, yy, hh) => axis === 'x'
+    ? box(p, (s + e) / 2, yy, f, e - s, hh, WT, WALL)
+    : box(p, f, yy, (s + e) / 2, WT, hh, e - s, WALL);
+  segs.forEach(s => put(s[0], s[1], y0 + wh / 2, wh));
+  doors.forEach(d => put(d[0], d[1], y0 + DOOR_H + (wh - DOOR_H) / 2, wh - DOOR_H));
+}
+function label(p, text, x, y, z, w) {
+  w = w || 6;
+  const c = document.createElement('canvas'); c.width = 320; c.height = 64;
+  const g = c.getContext('2d'); g.fillStyle = 'rgba(0,0,0,.65)'; g.fillRect(0, 0, 320, 64);
+  g.fillStyle = '#fff'; g.font = 'bold 28px sans-serif'; g.textAlign = 'center'; g.fillText(text, 160, 42);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+  s.scale.set(w, w / 5, 1); s.position.set(x, y, z); s.userData.label = true; p.add(s);
+}
+const rooms = (p, list, y0, up) => list.forEach(r => {
+  const n = r[0], x1 = r[1], z1 = r[2], x2 = r[3], z2 = r[4];
+  box(p, (x1 + x2) / 2, y0 + .02, (z1 + z2) / 2, x2 - x1, .04, z2 - z1, MAT(r[5], 1));
+  label(p, n, (x1 + x2) / 2, y0 + (up ? 2.4 : 5), n === 'SẢNH' ? 16 : (z1 + z2) / 2, Math.min(7, (x2 - x1) * .8));
+});
+const rail = (p, x1, z1, x2, z2, y0) => box(p, (x1 + x2) / 2, y0 + RAIL_H / 2, (z1 + z2) / 2, Math.max(.1, x2 - x1), RAIL_H, Math.max(.1, z2 - z1), RAILMAT);
+
+// ---------- Dựng từng phần (lỗi ở phần nào sẽ báo đúng phần đó) ----------
+step('tầng trệt', () => { rooms(G, ROOMS_G, 0, false); WALLS_G.forEach(w => wall(G, w, 0, WHG)); });
+
+step('tầng lầu', () => {
+  rooms(U, ROOMS_U, FLOOR2, true); WALLS_U.forEach(w => wall(U, w, FLOOR2, WHU));
+  const SLAB = MAT(0x4a4038, 1);
+  const slab = (x1, z1, x2, z2) => box(U, (x1 + x2) / 2, FLOOR2 - .1, (z1 + z2) / 2, x2 - x1, .2, z2 - z1, SLAB);
+  slab(0, 0, W, HZ); slab(0, HZ, CX - HOLE_HALF, D); slab(CX + HOLE_HALF, HZ, W, D);   // sàn lầu có lỗ cầu thang
+  rail(U, CX - 13.5, HZ, CX + 13.5, HZ, FLOOR2);                                       // lan can nhìn xuống sảnh
+  rail(U, CX - HOLE_HALF, HZ, CX - HOLE_HALF, D, FLOOR2); rail(U, CX + HOLE_HALF, HZ, CX + HOLE_HALF, D, FLOOR2);
+});
+
+step('cầu thang', () => {
+  function flight(x0, z0, w, n, base, color, carpet) {    // thang thẳng đi về phía bắc, tay vịn đặc 2 mép
+    const m = MAT(color, .8);
+    for (let i = 0; i < n; i++) {
+      const top = base + (i + 1) * RISE, cz = z0 - (i + .5) * RUN;
+      box(B, x0, top / 2, cz, w, top, RUN, m);
+      if (carpet) box(B, x0, top + .02, cz, w * .6, .04, RUN, CARPET);
+      [-1, 1].forEach(s => box(B, x0 + s * (w / 2 - .05), top + RAIL_H / 2, cz, .1, RAIL_H, RUN, RAILMAT));
+    }
+  }
