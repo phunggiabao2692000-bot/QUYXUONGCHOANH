@@ -1,4 +1,4 @@
-=<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
@@ -16,7 +16,7 @@ kbd{background:#222;border:1px solid #777;border-radius:3px;padding:0 5px;font-s
 <body>
 <div id="err"></div>
 <div id="info">
-  <div><b>Nhà 72x52m: phòng game, phòng bí mật, đèn chùm</b></div>
+  <div><b>Nhà 72x52m: cầu thang lớn, tay vịn nâu, tủ ở mọi phòng</b></div>
   <div id="st">Đang chờ...</div>
   <div>Chế độ: <span id="mode"></span> (<kbd>V</kbd> đổi) &nbsp; Xem: <span id="fl"></span></div>
   <div><kbd>1</kbd> tầng trệt &nbsp; <kbd>2</kbd> tầng lầu &nbsp; <kbd>3</kbd> cả hai &nbsp; <kbd>L</kbd> tên phòng &nbsp; <kbd>C</kbd> trần nhà &nbsp; <kbd>F</kbd> sáng/tối &nbsp; <kbd>K</kbd> độ phân giải</div>
@@ -44,11 +44,12 @@ function build() {
 // ================= BẢN ĐỒ (mét). x sang phải, z xuống. Cửa chính ở z = D =================
 const W = 72, D = 52, CX = W / 2, F2 = 9.6;
 const WT = 0.3, WHG = F2 - 0.2, WHU = 4, DH = 3, NZ = 12, GZ = 7, SW = 14;   // NZ: độ sâu phòng phía bắc tầng lầu | GZ: hành lang 1 | SW: bề rộng khối phòng 2 bên
-const STEPS = 24, RISE = (F2 / 2) / STEPS, RUN = 0.3, RH = 1, LD = 4, MW = 8, AR = 6, AW = 5;
+// CẦU THANG: MW = bề rộng thang giữa | LD = độ sâu chiếu nghỉ | LXH = nửa bề rộng chiếu nghỉ (tăng các số này để cầu thang to hơn)
+const STEPS = 24, RISE = (F2 / 2) / STEPS, RUN = 0.3, RH = 1, LD = 6, MW = 12, LXH = 10, AR = 6, AW = 5;
 const TOT = STEPS * RUN + LD / 2 + AR;
 const FZ0 = D / 2 + TOT / 2, HZ = D / 2 - TOT / 2;
 const LZ = FZ0 - STEPS * RUN - LD / 2, LH = F2 / 2;
-const HH = 8 + AR + AW / 2, IN = 8 + AR - AW / 2;
+const HH = LXH + AR + AW / 2, IN = LXH + AR - AW / 2;
 const T1 = HZ + 8, T2 = HZ + 16, KS = HZ + 17;       // ranh giới: tắm 1 | tắm 2 | game ; trẻ em | bí mật
 const GY = 0.04, UY = F2 + 0.04, UC = F2 + WHU;
 
@@ -81,7 +82,7 @@ const WU = [
   ['z', HZ, D, W - SW, [[HZ + 4, HZ + 7]]]
 ];
 const KEY = [W - 8, 30], EXIT = [CX, D];
-const BAT = [[7, 12, 0], [CX, 3.5, 0], [W - 7, 46, 0], [66, 5, F2]];   // [x, z, độ cao sàn]
+const BAT = [[7, 12, 0], [CX, 3.5, 0], [W - 7, 46, 0], [60, 4, F2]];   // [x, z, độ cao sàn]
 // ==========================================================================================
 
 const scene = new THREE.Scene();
@@ -127,7 +128,9 @@ function tex(base, r1, r2, tile) {
 const SM = function (map, rough, bump) { return new THREE.MeshStandardMaterial({ map: map, bumpMap: map, bumpScale: bump, roughness: rough, metalness: 0.05 }); };
 const M = function (c, r, e) { return new THREE.MeshStandardMaterial({ color: c, roughness: r === undefined ? 0.8 : r, emissive: e || 0 }); };
 const WALL = SM(tex('#6b6966', 1, 1, false), 0.95, 1.2);
-const RAIL = M(0x1a1a1a, 0.5), CAP = M(0xa8a8a8, 0.4), STW = M(0xcfcfcf, 0.6), STB = M(0x101010, 0.5), SL = M(0x181818, 1), IRON = M(0x161616, 0.45);
+// TAY VỊN NÂU QUÝ TỘC: thân gỗ óc chó đậm, thanh trên nâu bóng, quả cầu đồng
+const RAIL = M(0x2e1a0f, 0.5), CAP = M(0x6b3f24, 0.28), GOLD = new THREE.MeshStandardMaterial({ color: 0x9a7b3c, roughness: 0.3, metalness: 0.7 });
+const STW = M(0xcfcfcf, 0.6), STB = M(0x101010, 0.5), SL = M(0x181818, 1), IRON = M(0x161616, 0.45);
 const MT = {
   wood: M(0x2b2622, 0.7), wood2: M(0x4a443e, 0.7), wh: M(0xd8d8d8, 0.7), bk: M(0x0e0e0e, 0.6), gy: M(0x6a6a6a, 0.7),
   fab: M(0x3c3c3e, 1), red: M(0x4a0b0b, 0.9), met: M(0x8a8a8a, 0.4), lamp: M(0xffe0b0, 0.5, 0x553311), flame: M(0xffcc66, 0.5, 0xffaa33),
@@ -150,7 +153,7 @@ function make(p, x, y0, z, ry, parts) {
 }
 function put(p, y0, x, z, ry, parts, rx, sc) { const g = make(p, x, y0, z, ry, parts); if (rx) g.rotation.x = rx; if (sc) g.scale.setScalar(sc); return g; }
 
-// Tranh gáy sách đen trắng
+// Texture gáy sách đen trắng
 const BT = (function () {
   const c = document.createElement('canvas'); c.width = c.height = 128;
   const g = c.getContext('2d'); g.fillStyle = '#070707'; g.fillRect(0, 0, 128, 128);
@@ -259,7 +262,7 @@ function chandelier(p, x, y, z) {
   p.add(g); return g;
 }
 
-// ===== THƯ VIỆN NỘI THẤT =====
+// ===== NỘI THẤT =====
 const P = {
   shelf: function (w, h, d) {
     const a = [[-w / 2 + 0.06, 0, 0, 0.12, h, d, 'wood'], [w / 2 - 0.06, 0, 0, 0.12, h, d, 'wood'], [0, h - 0.12, 0, w, 0.12, d, 'wood'], [0, 0, 0, w - 0.2, 0.15, d, 'wood'], [0, 0.15, -d / 2 + 0.05, w - 0.24, h - 0.27, 0.08, bookMat(w, h)]];
@@ -275,7 +278,7 @@ const P = {
   floorlamp: function () { return [[0, 0, 0, 0.5, 0.08, 0.5, 'bk', 'c'], [0, 0.08, 0, 0.06, 2.4, 0.06, 'bk'], [0, 2.45, 0, 0.7, 0.55, 0.7, 'lamp', 'c']]; },
   wardrobe: function (w) { return [[0, 0, 0, w, 4, 1.2, 'wood'], [-w / 4, 0.15, 0.61, w / 2 - 0.15, 3.7, 0.04, 'wood2'], [w / 4, 0.15, 0.61, w / 2 - 0.15, 3.7, 0.04, 'wood2'], [0, 1.6, 0.64, 0.06, 0.6, 0.04, 'met']]; },
   dresser: function () { return [[0, 0, 0, 3, 1.3, 1.1, 'wood'], [0, 1.3, 0, 3.1, 0.08, 1.2, 'wood2'], [0, 1.5, -0.5, 2, 2, 0.08, 'gl'], [-0.8, 0.2, 0.56, 1.3, 0.4, 0.03, 'wood2'], [0.8, 0.2, 0.56, 1.3, 0.4, 0.03, 'wood2'], [-0.8, 0.7, 0.56, 1.3, 0.4, 0.03, 'wood2'], [0.8, 0.7, 0.56, 1.3, 0.4, 0.03, 'wood2']]; },
-  cab: function (w, h) { return [[0, 0, 0, w, h, 0.8, 'wood'], [0, 0.3, 0.41, w - 0.2, h - 0.6, 0.03, 'gl'], [0, 0, 0.41, w - 0.2, 0.3, 0.03, 'wood2']]; },
+  cab: function (w, h) { return [[0, 0, 0, w, h, 0.8, 'wood'], [0, 0.3, 0.41, w - 0.2, h - 0.6, 0.03, 'gl'], [0, 0, 0.41, w - 0.2, 0.3, 0.03, 'wood2'], [0, h, 0, w + 0.15, 0.1, 0.9, 'wood2']]; },
   candle: function () { return [[0, 0, 0, 0.5, 0.08, 0.5, 'bk', 'c'], [0, 0.08, 0, 0.08, 0.4, 0.08, 'met'], [0, 0.44, 0, 0.8, 0.04, 0.04, 'met'], [-0.3, 0.48, 0, 0.07, 0.4, 0.07, 'wh', 'c'], [0, 0.48, 0, 0.07, 0.5, 0.07, 'wh', 'c'], [0.3, 0.48, 0, 0.07, 0.4, 0.07, 'wh', 'c'], [-0.3, 0.88, 0, 0.08, 0.14, 0.08, 'flame', 'c'], [0, 0.98, 0, 0.08, 0.14, 0.08, 'flame', 'c'], [0.3, 0.88, 0, 0.08, 0.14, 0.08, 'flame', 'c']]; },
   clock: function () { return [[0, 0, 0, 1.1, 0.4, 0.8, 'wood'], [0, 0.4, 0, 0.9, 3, 0.6, 'wood'], [0, 3.4, 0, 1.1, 1, 0.7, 'wood'], [0, 3.55, 0.36, 0.7, 0.7, 0.02, 'wh'], [0, 3.9, 0.375, 0.05, 0.3, 0.02, 'bk'], [0.1, 3.9, 0.375, 0.22, 0.05, 0.02, 'bk'], [0, 0.9, 0.31, 0.55, 1.7, 0.02, 'gl']]; },
   stat: function (m) { return [[0, 0, 0, 0.9, 1.2, 0.9, 'gy'], [0, 1.2, 0, 0.55, 0.7, 0.4, m], [0, 1.9, 0, 0.38, 0.5, 0.38, m]]; },
@@ -336,9 +339,16 @@ function rooms(p, list, y0, up) {
     label(p, r[0], (r[1] + r[3]) / 2, y0 + (up ? 2.4 : 5), r[0] === 'SẢNH' ? 14 : (r[2] + r[4]) / 2, Math.min(7, w * 0.8));
   });
 }
+// Lan can nâu: thân đặc + thanh trên nâu bóng
 function rail(p, x1, z1, x2, z2, y0) {
   const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2, w = Math.max(0.1, x2 - x1), d = Math.max(0.1, z2 - z1);
-  box(p, cx, y0 + RH / 2, cz, w, RH, d, RAIL); box(p, cx, y0 + RH + 0.05, cz, w + 0.1, 0.1, d + 0.1, CAP);
+  box(p, cx, y0 + RH / 2, cz, w, RH, d, RAIL); box(p, cx, y0 + RH + 0.06, cz, w + 0.12, 0.12, d + 0.12, CAP);
+}
+// Cột trụ nâu có quả cầu đồng ở đầu
+function newel(p, x, y, z) {
+  box(p, x, y + (RH + 0.5) / 2, z, 0.36, RH + 0.5, 0.36, RAIL);
+  box(p, x, y + RH + 0.54, z, 0.46, 0.08, 0.46, CAP);
+  const b = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), GOLD); b.position.set(x, y + RH + 0.78, z); b.castShadow = true; p.add(b);
 }
 
 // ===== KHUNG NHÀ =====
@@ -349,13 +359,14 @@ const slab = function (x1, z1, x2, z2) { box(U, (x1 + x2) / 2, F2 - 0.1, (z1 + z
 slab(0, 0, W, HZ); slab(0, HZ, CX - HH, D); slab(CX + HH, HZ, W, D);
 rail(U, CX - IN, HZ, CX + IN, HZ, F2); rail(U, CX - HH, HZ, CX - HH, D, F2); rail(U, CX + HH, HZ, CX + HH, D, F2);
 
-// ===== CẦU THANG ĐÔI Ở CHÍNH GIỮA NHÀ, bậc đen trắng xen kẽ =====
+// ===== CẦU THANG ĐÔI Ở CHÍNH GIỮA NHÀ: bậc đen trắng xen kẽ, tay vịn nâu =====
 function flight(x0, z0, w, n, base) {
   for (let i = 0; i < n; i++) {
     const top = base + (i + 1) * RISE, cz = z0 - (i + 0.5) * RUN;
     box(B, x0, top / 2, cz, w, top, RUN, i % 2 ? STB : STW);
-    [-1, 1].forEach(function (s) { box(B, x0 + s * (w / 2 - 0.05), top + RH / 2, cz, 0.1, RH, RUN, RAIL); box(B, x0 + s * (w / 2 - 0.05), top + RH + 0.05, cz, 0.16, 0.1, RUN, CAP); });
+    [-1, 1].forEach(function (s) { box(B, x0 + s * (w / 2 - 0.05), top + RH / 2, cz, 0.12, RH, RUN, RAIL); box(B, x0 + s * (w / 2 - 0.05), top + RH + 0.06, cz, 0.24, 0.12, RUN, CAP); });
   }
+  [-1, 1].forEach(function (s) { const xx = x0 + s * (w / 2 - 0.05); newel(B, xx, base, z0 + 0.15); newel(B, xx, base + n * RISE, z0 - n * RUN - 0.15); });
 }
 function arc(cx, cz, r, a0, a1, n, w, base) {
   const da = (a1 - a0) / n, len = r * Math.abs(da) * 1.04;
@@ -364,17 +375,19 @@ function arc(cx, cz, r, a0, a1, n, w, base) {
     box(B, cx + r * ca, top / 2, cz + r * sa, w, top, len, i % 2 ? STB : STW).rotation.y = -a;
     [-1, 1].forEach(function (s) {
       const o = r + s * (w / 2 - 0.05);
-      box(B, cx + o * ca, top + RH / 2, cz + o * sa, 0.1, RH, len, RAIL).rotation.y = -a;
-      box(B, cx + o * ca, top + RH + 0.05, cz + o * sa, 0.16, 0.1, len, CAP).rotation.y = -a;
+      box(B, cx + o * ca, top + RH / 2, cz + o * sa, 0.12, RH, len, RAIL).rotation.y = -a;
+      box(B, cx + o * ca, top + RH + 0.06, cz + o * sa, 0.24, 0.12, len, CAP).rotation.y = -a;
     });
   }
+  [-1, 1].forEach(function (s) { const o = r + s * (w / 2 - 0.05); newel(B, cx + o * Math.cos(a1), base + n * RISE, cz + o * Math.sin(a1)); });
 }
 flight(CX, FZ0, MW, STEPS, 0);
-box(B, CX, LH / 2, LZ, 16, LH, LD, STW);
-arc(CX - 8, HZ, AR, Math.PI / 2, Math.PI, STEPS, AW, LH);
-arc(CX + 8, HZ, AR, Math.PI / 2, 0, STEPS, AW, LH);
-rail(B, CX - 8, LZ - LD / 2, CX + 8, LZ - LD / 2, LH);
-rail(B, CX - 8, LZ + LD / 2, CX - MW / 2, LZ + LD / 2, LH); rail(B, CX + MW / 2, LZ + LD / 2, CX + 8, LZ + LD / 2, LH);
+box(B, CX, LH / 2, LZ, 2 * LXH, LH, LD, STW);                   // chiếu nghỉ lớn
+arc(CX - LXH, HZ, AR, Math.PI / 2, Math.PI, STEPS, AW, LH);
+arc(CX + LXH, HZ, AR, Math.PI / 2, 0, STEPS, AW, LH);
+rail(B, CX - LXH, LZ - LD / 2, CX + LXH, LZ - LD / 2, LH);
+rail(B, CX - LXH, LZ + LD / 2, CX - MW / 2, LZ + LD / 2, LH); rail(B, CX + MW / 2, LZ + LD / 2, CX + LXH, LZ + LD / 2, LH);
+[-1, 1].forEach(function (s) { newel(B, CX + s * (LXH - 0.2), LH, LZ - LD / 2 + 0.2); newel(B, CX + s * (LXH - 0.2), LH, LZ + LD / 2 - 0.2); });
 label(B, 'CẦU THANG ĐÔI', CX, F2 + 2, LZ, 5);
 
 // ===== ĐÈN CHÙM sảnh: treo vào xà ngang giữa 2 cột =====
@@ -384,18 +397,19 @@ box(B, CX, UC - 0.2, CHZ, 2 * HH + 1, 0.45, 0.6, IRON);
 const chand = chandelier(B, CX, UC - 2.8, CHZ);
 
 // ===== NỘI THẤT TẦNG TRỆT =====
-// Tủ sách ngay sau cầu thang, thang trượt thư viện, góc đọc sách
-put(G, GY, CX, LZ - LD / 2 - 0.45, Math.PI, P.shelf(10, 4.4, 0.8));
+// Tủ sách ngay sau cầu thang (rộng 16m), thang trượt thư viện, góc đọc sách
+put(G, GY, CX, LZ - LD / 2 - 0.45, Math.PI, P.shelf(16, 4.4, 0.8));
 put(G, GY, CX + 3.5, LZ - LD / 2 - 2, 0, P.ladder(), 0.2);
-put(G, GY, CX - 6.5, 20, 0, P.floorlamp());
+put(G, GY, CX - 9, 19, 0, P.floorlamp());
 put(G, GY, CX - 4, 17.5, 0, P.sofa(1.8, 'red'), 0, 1.2);
 put(G, GY, CX + 4.5, 17.5, 0, P.table(1.2, 1.2, 0.8, 'wood2')); put(G, GY + 0.8, CX + 4.5, 17.5, 0, P.candle());
-label(G, 'TỦ SÁCH SAU CẦU THANG', CX, 5.4, 21.5, 6);
-// Hành lang 1: thảm, tranh lớn, ghế dài
+label(G, 'TỦ SÁCH SAU CẦU THANG', CX, 5.6, LZ - LD / 2 - 1.2, 6);
+// Hành lang 1: thảm, tranh lớn, ghế dài, TỦ CAO ở cuối phía đông
 put(G, GY, CX, 3.8, 0, P.rug(66, 3, 'red'));
-[6, 16, 26, 46, 56, 66].forEach(function (x, i) { painting(G, x, 4.6, 0.22, 0, 4.2, 3, i % 6); });
+[6, 16, 26, 46, 56, 62].forEach(function (x, i) { painting(G, x, 4.6, 0.22, 0, 4.2, 3, i % 6); });
 put(G, GY, CX, 1.1, 0, P.bench(4));
-// Sảnh: đồng hồ quả lắc, tranh khổng lồ, bàn nến, tượng canh cửa, ghế dài, thảm đỏ
+put(G, GY, W - 0.6, 3.5, -Math.PI / 2, P.cab(3.4, 3.2));
+// Sảnh: đồng hồ quả lắc, tranh khổng lồ, bàn nến, tượng canh cửa, ghế dài, thảm đỏ tới chân thang, TỦ cạnh cửa phòng khách
 const clk = put(G, GY, 16.5, GZ + 0.65, 0, P.clock());
 const pend = new THREE.Group(); pend.position.set(0, 3.3, 0.34);
 pend.add(mk(0.05, 1.5, 0.03, MT.met, 0, -0.75, 0)); pend.add(mk(0.3, 0.3, 0.04, MT.met, 0, -1.5, 0)); clk.add(pend);
@@ -407,10 +421,11 @@ painting(G, W - SW - 0.22, 5, 36, -Math.PI / 2, 6, 4, 3);
 put(G, GY, 54.5, GZ + 0.9, 0, P.table(4, 0.9, 0.9, 'wood'));
 put(G, GY + 0.9, 53.4, GZ + 0.9, 0, P.candle()); put(G, GY + 0.9, 55.6, GZ + 0.9, 0, P.candle());
 painting(G, 54.5, 3.5, GZ + 0.22, 0, 2.6, 1.8, 4);
-put(G, GY, CX - 6, D - 1.6, 0, P.stat('wh')); put(G, GY, CX + 6, D - 1.6, 0, P.stat('bk'));
+put(G, GY, CX - 9, D - 1.6, 0, P.stat('wh')); put(G, GY, CX + 9, D - 1.6, 0, P.stat('bk'));
 put(G, GY, SW + 0.7, 46, Math.PI / 2, P.bench(4)); put(G, GY, W - SW - 0.7, 46, -Math.PI / 2, P.bench(4));
-put(G, GY, CX, 44, 0, P.rug(5.5, 15, 'red'));
-// Phòng khách: đồ nội thất phóng to, tranh lớn
+put(G, GY, CX, 43, 0, P.rug(10, 17, 'red'));
+put(G, GY, SW + 0.6, 31, Math.PI / 2, P.cab(3, 3));
+// Phòng khách: đồ nội thất phóng to, tranh lớn, tủ kính
 put(G, GY, 6.5, 22, 0, P.rug(11, 9, 'fab'));
 put(G, GY, 2.4, 22, Math.PI / 2, P.sofa(5, 'fab'), 0, 1.5);
 put(G, GY, 6.4, 22, 0, P.table(1.3, 2.6, 0.7, 'wood2'), 0, 1.6);
@@ -426,23 +441,24 @@ painting(G, 0.22, 6, 36, Math.PI / 2, 5, 3.4, 0);
 painting(G, 0.22, 5.5, 45, Math.PI / 2, 4, 3, 1);
 painting(G, SW - 0.22, 5.5, 16, -Math.PI / 2, 5, 3.4, 4);
 painting(G, SW - 0.22, 5.5, 40, -Math.PI / 2, 6, 4, 5);
-// Phòng kho: kệ kim loại, thùng gỗ, thùng phuy, bàn đặt chìa khóa
+// Phòng kho: kệ kim loại, thùng gỗ, thùng phuy, bàn đặt chìa khóa, TỦ sát tường tây
 [14, 22, 38, 46].forEach(function (z) { put(G, GY, 71.3, z, -Math.PI / 2, P.rack(6)); });
 put(G, GY, 61, 10.5, 0, P.crate(1.6)); put(G, GY, 62.8, 10.5, 0.3, P.crate(1.2)); put(G, GY + 1.6, 61, 10.5, 0.2, P.crate(1.1));
 put(G, GY, 61, 49.5, 0, P.crate(1.5)); put(G, GY + 1.5, 61, 49.5, 0.2, P.crate(1.1));
 put(G, GY, 68.6, 50.6, 0, P.barrel()); put(G, GY, 67.4, 49.4, 0, P.barrel()); put(G, GY, 68.2, 48.8, 0, P.barrel());
 put(G, GY, KEY[0], KEY[1], 0, P.table(2.4, 1.2, 0.9, 'wood2')); put(G, GY, KEY[0], KEY[1] + 1.5, Math.PI, P.chair());
 painting(G, W - SW + 0.22, 5.5, 38, Math.PI / 2, 5, 3.4, 1);
+put(G, GY, W - SW + 0.6, 18, Math.PI / 2, P.cab(3.6, 3));
 
 // ===== NỘI THẤT TẦNG LẦU =====
-// Phòng ngủ: 2 giường, 3 tủ đầu giường, tủ áo, bàn trang điểm
+// Phòng ngủ: 2 giường, 3 tủ đầu giường, TỦ ÁO, bàn trang điểm
 put(U, UY, 10, 6, 0, P.rug(13, 7, 'red'));
 put(U, UY, 5, 3.1, 0, P.bed()); put(U, UY, 15, 3.1, 0, P.bed());
 [1.3, 10, 19.4].forEach(function (x) { put(U, UY, x, 0.8, 0, P.nstand()); put(U, UY + 1.06, x, 0.8, 0, P.lamp()); });
 put(U, UY, 25.2, 8, -Math.PI / 2, P.wardrobe(3.4));
 put(U, UY, 0.8, 8, Math.PI / 2, P.dresser());
 painting(U, 10, UY + 2.7, 0.22, 0, 3.6, 1.6, 2);
-// Phòng bếp: quầy, tủ đông khổng lồ, bàn ăn to 8 ghế bày đĩa và nến
+// Phòng bếp: quầy, tủ đông khổng lồ, bàn ăn to 8 ghế, TỦ CHÉN sát tường tây
 put(U, UY, 35, 0.8, 0, P.counter(16));
 put(U, UY, 47.5, 1.3, 0, P.freezer());
 put(U, UY, 38.5, 7, 0, P.table(9, 2.4, 0.9, 'wood2'));
@@ -452,35 +468,40 @@ put(U, UY, 38.5, 7, 0, P.table(9, 2.4, 0.9, 'wood2'));
 });
 put(U, UY, 33.2, 7, Math.PI / 2, P.chair()); put(U, UY, 43.8, 7, -Math.PI / 2, P.chair());
 put(U, UY + 0.9, 38.5, 7, 0, P.candle());
-// Thư viện: tủ sách quanh tường, bàn đọc, sofa
+put(U, UY, 26.6, 7, Math.PI / 2, P.cab(4, 3.4));
+// Thư viện: các tủ sách LẤP ĐẦY phía đông (2 tủ sát tường đông + dãy tủ đứng), tủ sách tường bắc, bàn đọc
 [54.5, 61.5, 68.5].forEach(function (x) { put(U, UY, x, 0.55, 0, P.shelf(6.6, 3.8, 0.8)); });
+[3.7, 9.2].forEach(function (z) { put(U, UY, W - 0.6, z, -Math.PI / 2, P.shelf(5.3, 3.9, 0.8)); });   // tủ sát tường đông
+put(U, UY, 66.5, 6.2, -Math.PI / 2, P.shelf(6.4, 3.4, 0.8));                                         // dãy tủ đứng
 put(U, UY, 62, 8, 0, P.table(3, 1.4, 0.9, 'wood')); put(U, UY, 62, 9.6, Math.PI, P.chair());
 put(U, UY + 0.9, 61, 8, 0, P.lamp()); put(U, UY, 51.2, 8, Math.PI / 2, P.sofa(2.6, 'red'));
 painting(U, 54.5, UY + 2.3, NZ - 0.22, Math.PI, 3.4, 2.2, 3);
-painting(U, W - 0.22, UY + 2.3, 6, -Math.PI / 2, 4, 2.4, 0);
-// Hành lang 2: thảm, bàn đặt bình hoa, tranh
+// Hành lang 2: thảm, bàn đặt bình hoa, tranh, TỦ giữa tường bắc
 put(U, UY, CX, 15.2, 0, P.rug(66, 2.2, 'red'));
 [22, 50].forEach(function (x) { put(U, UY, x, 12.55, 0, P.table(1.4, 0.6, 0.9, 'wood2')); put(U, UY + 0.9, x, 12.55, 0, [[0, 0, 0, 0.35, 0.6, 0.35, 'wh', 'c']]); });
-[[5, 0], [22, 4], [38, 2], [50, 1], [66, 5]].forEach(function (a) { painting(U, a[0], UY + 2.3, NZ + 0.22, 0, 3.2, 2, a[1]); });
-// Ban công: ghế dài (không chắn các cửa)
+[[5, 0], [22, 4], [38, 2], [66, 5]].forEach(function (a) { painting(U, a[0], UY + 2.3, NZ + 0.22, 0, 3.2, 2, a[1]); });
+put(U, UY, 45, NZ + 0.6, 0, P.cab(3.4, 3));
+// Ban công: ghế dài + tủ nhỏ ở góc nam
 [26.4, 35.5, 46].forEach(function (z) { put(U, UY, SW + 0.9, z, Math.PI / 2, P.bench(3.2)); });
 [29, 38, 46].forEach(function (z) { put(U, UY, W - SW - 0.9, z, -Math.PI / 2, P.bench(3.2)); });
-// Phòng tắm 1: bồn tắm, bồn rửa, bồn cầu
+put(U, UY, SW + 1.75, D - 0.6, Math.PI, P.cab(2.4, 2.6)); put(U, UY, W - SW - 1.75, D - 0.6, Math.PI, P.cab(2.4, 2.6));
+// Phòng tắm 1: bồn tắm, bồn rửa, bồn cầu (không có tủ)
 put(U, UY, 3.4, HZ + 1.5, 0, P.bath());
 put(U, UY, 5, T1 - 0.7, Math.PI, P.sink());
 put(U, UY, 11, T1 - 0.9, Math.PI, P.toilet());
-// Phòng tắm 2: buồng tắm kính, bồn rửa, bồn cầu
+// Phòng tắm 2: buồng tắm kính, bồn rửa, bồn cầu (không có tủ)
 put(U, UY, 1.6, T1 + 1.6, 0, P.shower());
 put(U, UY, 7, T1 + 0.7, 0, P.sink());
 put(U, UY, 11, T2 - 0.9, Math.PI, P.toilet());
-// Phòng game riêng: bàn 2 màn hình, tivi lớn, túi lười, 2 máy arcade, đèn neon
+// Phòng game riêng: bàn 2 màn hình, tivi lớn, túi lười, 2 máy arcade, đèn neon, TỦ trưng bày
 put(U, UY, 5, 35.4, 0, P.gdesk()); put(U, UY, 5, 37.4, Math.PI, P.chair());
 put(U, UY, 1.3, 43.4, Math.PI / 2, P.tv());
 put(U, UY, 6.5, 43.4, 0, P.bean()); put(U, UY, 8.4, 40.9, 0, P.bean()); put(U, UY, 8.4, 46, 0, P.bean());
 put(U, UY, 3, 50.6, Math.PI, P.arcade()); put(U, UY, 5.4, 50.6, Math.PI, P.arcade());
 box(U, 7, UY + 3.7, T2 + 0.3, 12, 0.1, 0.1, MT.neon);
 painting(U, SW - 0.22, UY + 2.2, 46, -Math.PI / 2, 4, 2.6, 4);
-// Phòng trẻ em: nôi (chuông xoay), ghế bập bênh, giường nhỏ, hòm đồ chơi, kệ sách che cửa bí mật
+put(U, UY, 0.6, 37.5, Math.PI / 2, P.cab(3, 2.8));
+// Phòng trẻ em: nôi (chuông xoay), ghế bập bênh, giường nhỏ, hòm đồ chơi, TỦ đồ chơi, kệ sách che cửa bí mật
 put(U, UY, 65, 27, 0, P.rug(8, 6, 'fab'));
 put(U, UY, 70.7, 28, 0, P.crib());
 const mob = new THREE.Group(); mob.position.set(70.7, UY + 3, 28);
@@ -491,10 +512,11 @@ const rocker = put(U, UY, 63, 29, 0, P.rocker());
 put(U, UY, 59.6, 32.8, 0, [[0, 0, 0, 1.8, 0.8, 1.1, 'wood2'], [0, 0.8, 0, 1.9, 0.06, 1.2, 'wood']]);
 put(U, UY + 0.8, 59.2, 32.8, 0, [[0, 0, 0, 0.4, 0.4, 0.4, 'wh'], [0.45, 0, 0.1, 0.4, 0.4, 0.4, 'bk'], [0.2, 0.4, 0, 0.4, 0.4, 0.4, 'gy']]);
 put(U, UY, 67.4, 20.7, 0, [[0, 0, 0, 2, 0.4, 3.8, 'wood'], [0, 0.4, 0, 1.8, 0.25, 3.6, 'wh'], [0, 0, -1.9, 2, 1.1, 0.12, 'wood']]);
+put(U, UY, W - 0.6, 32.5, -Math.PI / 2, P.cab(3, 2.4));
 put(U, UY, 65.5, KS - 0.55, Math.PI, P.shelf(4.4, 3.6, 0.8));   // kệ sách = cửa bí mật
 label(U, 'KỆ SÁCH = CỬA BÍ MẬT', 65.5, UY + 4.6, KS - 1, 4.5);
 painting(U, W - 0.22, UY + 2.8, 22, -Math.PI / 2, 3, 1.5, 0);
-// Phòng bí mật: vòng tròn trên sàn, nến, két sắt, kệ lọ, rương, ghế trẻ em quay mặt vào tường
+// Phòng bí mật: vòng tròn trên sàn, nến, két sắt, kệ lọ, rương, ghế trẻ em quay mặt vào tường, TỦ cũ
 put(U, UY, 65, 43.5, 0, P.circle());
 [[60.6, 43.5], [69.4, 43.5], [65, 39.1], [65, 47.9]].forEach(function (c) { put(U, UY, c[0], c[1], 0, P.candle(), 0, 1.3); });
 put(U, UY, 71, 40, -Math.PI / 2, P.safe());
@@ -502,8 +524,9 @@ put(U, UY, 71.3, 47, -Math.PI / 2, P.jars(5));
 put(U, UY, 60.5, 50.7, Math.PI, P.chest());
 put(U, UY, 67.5, 50.4, Math.PI, P.table(3, 1.2, 0.9, 'wood2')); put(U, UY + 0.9, 67.5, 50.4, 0, P.candle());
 put(U, UY, 59.4, 43.5, -Math.PI / 2, P.chair(), 0, 0.8);
+put(U, UY, W - SW + 0.6, 37.5, Math.PI / 2, P.cab(2.6, 2.8));
 painting(U, 65, UY + 2.2, D - 0.22, Math.PI, 4.2, 2.6, 1);
-painting(U, W - SW + 0.22, UY + 2.4, 40, Math.PI / 2, 3.4, 2, 3);
+painting(U, W - SW + 0.22, UY + 2.4, 47, Math.PI / 2, 3.4, 2, 3);
 
 // ===== ĐÈN TRONG TỪNG PHÒNG =====
 lamp(G, CX, F2 - 0.2, 3.2, 3.5, 0xdde4ff, 1.2, 46);      // hành lang 1
@@ -512,7 +535,7 @@ lamp(G, 65, F2 - 0.2, 3.4, 30, 0xdde4ff, 1.0, 28);       // kho
 lamp(U, 13, UC, 1.4, 6, 0xffe0b0, 1.0, 22);              // phòng ngủ
 lamp(U, 38.5, UC, 1.4, 7, 0xffe0b0, 1.1, 24, true);      // bếp (bàn ăn)
 lamp(U, 61, UC, 1.4, 6, 0xffe0b0, 1.0, 22);              // thư viện
-lamp(U, CX, UC, 1.4, 15.2, 0xdde4ff, 0.9, 44);           // hành lang 2
+lamp(U, CX, UC, 1.4, 14.9, 0xdde4ff, 0.9, 44);           // hành lang 2
 lamp(U, 7, UC, 1.2, HZ + 4, 0xeef4ff, 0.8, 18);          // tắm 1
 lamp(U, 7, UC, 1.2, T1 + 4, 0xeef4ff, 0.8, 18);          // tắm 2
 lamp(U, 7, UC, 1.2, 43, 0xcfe2ff, 0.9, 22);              // phòng game
@@ -534,7 +557,7 @@ const keys = {}; let tx = CX, tz = D / 2, h = 95, mode = 'top', yaw = 0, pitch =
 const fpos = new THREE.Vector3(), dom = renderer.domElement;
 const HELP = {
   top: '<kbd>W A S D</kbd> kéo bản đồ &nbsp; <kbd>Q</kbd>/<kbd>E</kbd> phóng to / thu nhỏ',
-  fly: 'Bấm vào màn hình để khóa chuột (<kbd>Esc</kbd> nhả) hoặc giữ chuột để xoay<br><kbd>W A S D</kbd> bay &nbsp; <kbd>Space</kbd> lên &nbsp; <kbd>Shift</kbd> xuống &nbsp; <kbd>Z</kbd>/<kbd>X</kbd> chậm / nhanh<br><kbd>B</kbd> tủ sách &nbsp; <kbd>H</kbd> cửa chính &nbsp; <kbd>N</kbd> đèn chùm &nbsp; <kbd>G</kbd> hành lang 2 nhìn xuống &nbsp; <kbd>Y</kbd> hành lang 2 &nbsp; <kbd>T</kbd> hành lang 1 &nbsp; <kbd>O</kbd> phòng game &nbsp; <kbd>J</kbd> phòng bí mật'
+  fly: 'Bấm vào màn hình để khóa chuột (<kbd>Esc</kbd> nhả) hoặc giữ chuột để xoay<br><kbd>W A S D</kbd> bay &nbsp; <kbd>Space</kbd> lên &nbsp; <kbd>Shift</kbd> xuống &nbsp; <kbd>Z</kbd>/<kbd>X</kbd> chậm / nhanh<br><kbd>B</kbd> tủ sách &nbsp; <kbd>H</kbd> cửa chính &nbsp; <kbd>N</kbd> đèn chùm &nbsp; <kbd>G</kbd> hành lang 2 nhìn xuống &nbsp; <kbd>Y</kbd> hành lang 2 &nbsp; <kbd>T</kbd> hành lang 1 &nbsp; <kbd>O</kbd> phòng game &nbsp; <kbd>J</kbd> phòng bí mật &nbsp; <kbd>U</kbd> thư viện (tường đông)'
 };
 function setMode(m) {
   mode = m;
@@ -565,12 +588,13 @@ addEventListener('keydown', function (e) {
   if (mode === 'fly') {
     if (e.code === 'KeyT') { fpos.set(2, 1.6, 3.5); yaw = -Math.PI / 2; pitch = 0; showFloors(1); }
     if (e.code === 'KeyH') { fpos.set(CX, 1.6, D - 1.5); yaw = 0; pitch = 0.3; showFloors(3); }
-    if (e.code === 'KeyB') { fpos.set(CX, 2, 12); yaw = Math.PI; pitch = 0.1; showFloors(1); }
+    if (e.code === 'KeyB') { fpos.set(CX, 2, 11); yaw = Math.PI; pitch = 0.1; showFloors(1); }
     if (e.code === 'KeyN') { fpos.set(CX - HH + 2.5, F2 + 1.6, CHZ); yaw = -Math.PI / 2; pitch = 0.05; showFloors(3); }
     if (e.code === 'KeyG') { fpos.set(CX, F2 + 1.6, HZ - 2.5); yaw = Math.PI; pitch = -0.35; showFloors(3); }
     if (e.code === 'KeyY') { fpos.set(2, F2 + 1.6, (NZ + HZ) / 2); yaw = -Math.PI / 2; pitch = 0; showFloors(2); }
     if (e.code === 'KeyO') { fpos.set(12.5, F2 + 1.6, T2 + 2); yaw = Math.PI / 2 + 0.35; pitch = -0.1; showFloors(2); }
     if (e.code === 'KeyJ') { fpos.set(70.5, F2 + 1.6, KS + 2); yaw = 2.5; pitch = -0.1; showFloors(2); }
+    if (e.code === 'KeyU') { fpos.set(56, F2 + 1.6, 6); yaw = -Math.PI / 2; pitch = 0; showFloors(2); }
     if (e.code === 'KeyZ') speed = Math.max(2, speed / 1.4);
     if (e.code === 'KeyX') speed = Math.min(120, speed * 1.4);
     if (e.code === 'Space') e.preventDefault();
