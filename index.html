@@ -340,9 +340,15 @@ function rooms(p, list, y0, up) {
   });
 }
 // Lan can nâu: thân đặc + thanh trên nâu bóng
-function rail(p, x1, z1, x2, z2, y0) {
+function rail(p, x1, z1, x2, z2, y0) {   // lan can nâu: chân đặc + chấn song + thanh trên
   const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2, w = Math.max(0.1, x2 - x1), d = Math.max(0.1, z2 - z1);
-  box(p, cx, y0 + RH / 2, cz, w, RH, d, RAIL); box(p, cx, y0 + RH + 0.06, cz, w + 0.12, 0.12, d + 0.12, CAP);
+  box(p, cx, y0 + 0.25, cz, w, 0.5, d, RAIL);
+  box(p, cx, y0 + RH + 0.06, cz, w + 0.12, 0.12, d + 0.12, CAP);
+  const n = Math.max(1, Math.round(Math.max(w, d) / 0.7));
+  for (let i = 0; i <= n; i++) {
+    const t = i / n - 0.5;
+    box(p, w >= d ? cx + t * w : cx, y0 + 0.5 + (RH - 0.5) / 2, w >= d ? cz : cz + t * d, 0.08, RH - 0.5, 0.08, RAIL);
+  }
 }
 // Cột trụ nâu có quả cầu đồng ở đầu
 function newel(p, x, y, z) {
@@ -350,7 +356,31 @@ function newel(p, x, y, z) {
   box(p, x, y + RH + 0.54, z, 0.46, 0.08, 0.46, CAP);
   const b = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), GOLD); b.position.set(x, y + RH + 0.78, z); b.castShadow = true; p.add(b);
 }
-
+function handrail(p, pts) {   // thanh vịn nghiêng liên tục theo bậc thang
+  const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), pts.length * 3, 0.09, 8), CAP);
+  m.castShadow = true; p.add(m);
+}
+function balusters(p, list) { list.forEach(function (q) { box(p, q[0], q[1], q[2], 0.07, 0.95, 0.07, RAIL); }); }
+function hideaway(p, y0, x, z, ry, w, d, h) {   // tủ đồ để trốn: cánh phải hé mở, bên trong tối, áo khoác treo
+  w = w || 2.8; d = d || 1.6; h = h || 4.2;
+  const g = new THREE.Group(); g.position.set(x, y0, z); g.rotation.y = ry; p.add(g);
+  box(g, -w / 2 + 0.07, h / 2, 0, 0.14, h, d, MT.wood); box(g, w / 2 - 0.07, h / 2, 0, 0.14, h, d, MT.wood);
+  box(g, 0, h - 0.07, 0, w, 0.14, d, MT.wood); box(g, 0, 0.1, 0, w, 0.2, d, MT.wood);
+  box(g, 0, h / 2, -d / 2 + 0.05, w - 0.2, h - 0.2, 0.1, MT.bk);
+  box(g, 0, h + 0.1, 0.05, w + 0.3, 0.2, d + 0.2, MT.wood2);
+  box(g, 0, h - 0.7, 0, w - 0.3, 0.06, 0.06, MT.met);
+  [-0.9, -0.45, 0, 0.45, 0.9].forEach(function (a, i) { if (Math.abs(a) < w / 2 - 0.2) box(g, a, h - 2.0, -0.1, 0.4, 2.6, 0.18, i % 2 ? MT.fab : MT.bk); });
+  const dw = (w - 0.28) / 2;
+  function door(px, side, ang) {
+    const pv = new THREE.Group(); pv.position.set(px, 0, d / 2); pv.rotation.y = ang; g.add(pv);
+    box(pv, side * dw / 2, h / 2, 0, dw, h - 0.3, 0.07, MT.wood2);
+    for (let k = 0; k < 6; k++) box(pv, side * dw / 2, h - 0.9 - k * 0.2, 0.05, dw - 0.3, 0.05, 0.03, MT.bk);
+    box(pv, side * (dw - 0.15), h / 2, 0.06, 0.05, 0.4, 0.05, MT.met);
+  }
+  door(-w / 2 + 0.14, 1, 0); door(w / 2 - 0.14, -1, 0.65);
+  label(g, 'TỦ TRỐN', 0, h + 0.9, 0, 3);
+  return g;
+}
 // ===== KHUNG NHÀ =====
 rooms(G, RG, 0, false); WG.forEach(function (w) { wall(G, w, 0, WHG); });
 rooms(U, RU, F2, true); WU.forEach(function (w) { wall(U, w, F2, WHU); });
@@ -364,32 +394,31 @@ function flight(x0, z0, w, n, base) {
   for (let i = 0; i < n; i++) {
     const top = base + (i + 1) * RISE, cz = z0 - (i + 0.5) * RUN;
     box(B, x0, top / 2, cz, w, top, RUN, i % 2 ? STB : STW);
-    [-1, 1].forEach(function (s) { box(B, x0 + s * (w / 2 - 0.05), top + RH / 2, cz, 0.12, RH, RUN, RAIL); box(B, x0 + s * (w / 2 - 0.05), top + RH + 0.06, cz, 0.24, 0.12, RUN, CAP); });
+    [-1, 1].forEach(function (s) { box(B, x0 + s * (w / 2 - 0.05), top + 0.3, cz, 0.12, 0.6, RUN, RAIL); });
   }
-  [-1, 1].forEach(function (s) { const xx = x0 + s * (w / 2 - 0.05); newel(B, xx, base, z0 + 0.15); newel(B, xx, base + n * RISE, z0 - n * RUN - 0.15); });
+  [-1, 1].forEach(function (s) {
+    const xx = x0 + s * (w / 2 - 0.05), pts = [], bl = [];
+    for (let i = 0; i <= n; i++) pts.push(new THREE.Vector3(xx, base + i * RISE + 1.05, z0 - i * RUN));
+    for (let i = 0; i < n; i += 2) bl.push([xx, base + (i + 1) * RISE + 0.48, z0 - (i + 0.5) * RUN]);
+    handrail(B, pts); balusters(B, bl);
+    newel(B, xx, base, z0 + 0.15); newel(B, xx, base + n * RISE, z0 - n * RUN - 0.15);
+  });
 }
 function arc(cx, cz, r, a0, a1, n, w, base) {
   const da = (a1 - a0) / n, len = r * Math.abs(da) * 1.04;
   for (let i = 0; i < n; i++) {
     const a = a0 + (i + 0.5) * da, top = base + (i + 1) * RISE, ca = Math.cos(a), sa = Math.sin(a);
     box(B, cx + r * ca, top / 2, cz + r * sa, w, top, len, i % 2 ? STB : STW).rotation.y = -a;
-    [-1, 1].forEach(function (s) {
-      const o = r + s * (w / 2 - 0.05);
-      box(B, cx + o * ca, top + RH / 2, cz + o * sa, 0.12, RH, len, RAIL).rotation.y = -a;
-      box(B, cx + o * ca, top + RH + 0.06, cz + o * sa, 0.24, 0.12, len, CAP).rotation.y = -a;
-    });
+    [-1, 1].forEach(function (s) { const o = r + s * (w / 2 - 0.05); box(B, cx + o * ca, top + 0.3, cz + o * sa, 0.12, 0.6, len, RAIL).rotation.y = -a; });
   }
-  [-1, 1].forEach(function (s) { const o = r + s * (w / 2 - 0.05); newel(B, cx + o * Math.cos(a1), base + n * RISE, cz + o * Math.sin(a1)); });
+  [-1, 1].forEach(function (s) {
+    const o = r + s * (w / 2 - 0.05), pts = [], bl = [];
+    for (let i = 0; i <= n; i++) { const a = a0 + i * da; pts.push(new THREE.Vector3(cx + o * Math.cos(a), base + i * RISE + 1.05, cz + o * Math.sin(a))); }
+    for (let i = 0; i < n; i += 2) { const a = a0 + (i + 0.5) * da; bl.push([cx + o * Math.cos(a), base + (i + 1) * RISE + 0.48, cz + o * Math.sin(a)]); }
+    handrail(B, pts); balusters(B, bl);
+    newel(B, cx + o * Math.cos(a1), base + n * RISE, cz + o * Math.sin(a1));
+  });
 }
-flight(CX, FZ0, MW, STEPS, 0);
-box(B, CX, LH / 2, LZ, 2 * LXH, LH, LD, STW);                   // chiếu nghỉ lớn
-arc(CX - LXH, HZ, AR, Math.PI / 2, Math.PI, STEPS, AW, LH);
-arc(CX + LXH, HZ, AR, Math.PI / 2, 0, STEPS, AW, LH);
-rail(B, CX - LXH, LZ - LD / 2, CX + LXH, LZ - LD / 2, LH);
-rail(B, CX - LXH, LZ + LD / 2, CX - MW / 2, LZ + LD / 2, LH); rail(B, CX + MW / 2, LZ + LD / 2, CX + LXH, LZ + LD / 2, LH);
-[-1, 1].forEach(function (s) { newel(B, CX + s * (LXH - 0.2), LH, LZ - LD / 2 + 0.2); newel(B, CX + s * (LXH - 0.2), LH, LZ + LD / 2 - 0.2); });
-label(B, 'CẦU THANG ĐÔI', CX, F2 + 2, LZ, 5);
-
 // ===== ĐÈN CHÙM sảnh: treo vào xà ngang giữa 2 cột =====
 const CHZ = 42;
 [CX - HH, CX + HH].forEach(function (x) { const col = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, UC - F2 + 0.05, 16), STW); col.position.set(x, F2 + (UC - F2) / 2, CHZ); col.castShadow = true; B.add(col); });
@@ -398,12 +427,13 @@ const chand = chandelier(B, CX, UC - 2.8, CHZ);
 
 // ===== NỘI THẤT TẦNG TRỆT =====
 // Tủ sách ngay sau cầu thang (rộng 16m), thang trượt thư viện, góc đọc sách
-put(G, GY, CX, LZ - LD / 2 - 0.45, Math.PI, P.shelf(16, 4.4, 0.8));
-put(G, GY, CX + 3.5, LZ - LD / 2 - 2, 0, P.ladder(), 0.2);
+put(G, GY, CX, LZ - LD / 2 - 0.45, Math.PI, P.shelf(22, F2 - 0.5, 0.8).concat([[0, F2 - 0.5, 0, 22.6, 0.25, 1.2, 'wood2'], [0, 0, 0.45, 22.6, 0.35, 0.3, 'wood2']]));   // rộng 22m, cao tới sàn tầng lầu
+const lad = put(G, GY, CX + 7, LZ - LD / 2 - 1.9, 0, P.ladder(), 0.12); lad.scale.y = 2.35;   // thang trượt cao 8.5m dựa vào tủ
+const bl = new THREE.PointLight(0xffd9a0, 1.2, 26, 1.5); bl.position.set(CX, 6, LZ - LD / 2 - 2.5); B.add(bl); LT.push({ l: bl, base: 1.2, flick: false });
 put(G, GY, CX - 9, 19, 0, P.floorlamp());
 put(G, GY, CX - 4, 17.5, 0, P.sofa(1.8, 'red'), 0, 1.2);
 put(G, GY, CX + 4.5, 17.5, 0, P.table(1.2, 1.2, 0.8, 'wood2')); put(G, GY + 0.8, CX + 4.5, 17.5, 0, P.candle());
-label(G, 'TỦ SÁCH SAU CẦU THANG', CX, 5.6, LZ - LD / 2 - 1.2, 6);
+label(G, 'TỦ SÁCH SAU CẦU THANG', CX, 10, LZ - LD / 2 - 1.2, 6);
 // Hành lang 1: thảm, tranh lớn, ghế dài, TỦ CAO ở cuối phía đông
 put(G, GY, CX, 3.8, 0, P.rug(66, 3, 'red'));
 [6, 16, 26, 46, 56, 62].forEach(function (x, i) { painting(G, x, 4.6, 0.22, 0, 4.2, 3, i % 6); });
@@ -499,7 +529,7 @@ put(U, UY, 1.3, 43.4, Math.PI / 2, P.tv());
 put(U, UY, 6.5, 43.4, 0, P.bean()); put(U, UY, 8.4, 40.9, 0, P.bean()); put(U, UY, 8.4, 46, 0, P.bean());
 put(U, UY, 3, 50.6, Math.PI, P.arcade()); put(U, UY, 5.4, 50.6, Math.PI, P.arcade());
 box(U, 7, UY + 3.7, T2 + 0.3, 12, 0.1, 0.1, MT.neon);
-painting(U, SW - 0.22, UY + 2.2, 46, -Math.PI / 2, 4, 2.6, 4);
+painting(U, SW - 0.22, UY + 2.2, 43, -Math.PI / 2, 4, 2.6, 4);
 put(U, UY, 0.6, 37.5, Math.PI / 2, P.cab(3, 2.8));
 // Phòng trẻ em: nôi (chuông xoay), ghế bập bênh, giường nhỏ, hòm đồ chơi, TỦ đồ chơi, kệ sách che cửa bí mật
 put(U, UY, 65, 27, 0, P.rug(8, 6, 'fab'));
@@ -515,7 +545,7 @@ put(U, UY, 67.4, 20.7, 0, [[0, 0, 0, 2, 0.4, 3.8, 'wood'], [0, 0.4, 0, 1.8, 0.25
 put(U, UY, W - 0.6, 32.5, -Math.PI / 2, P.cab(3, 2.4));
 put(U, UY, 65.5, KS - 0.55, Math.PI, P.shelf(4.4, 3.6, 0.8));   // kệ sách = cửa bí mật
 label(U, 'KỆ SÁCH = CỬA BÍ MẬT', 65.5, UY + 4.6, KS - 1, 4.5);
-painting(U, W - 0.22, UY + 2.8, 22, -Math.PI / 2, 3, 1.5, 0);
+painting(U, W - 0.22, UY + 2.8, 19,5, -Math.PI / 2, 3, 1.5, 0);
 // Phòng bí mật: vòng tròn trên sàn, nến, két sắt, kệ lọ, rương, ghế trẻ em quay mặt vào tường, TỦ cũ
 put(U, UY, 65, 43.5, 0, P.circle());
 [[60.6, 43.5], [69.4, 43.5], [65, 39.1], [65, 47.9]].forEach(function (c) { put(U, UY, c[0], c[1], 0, P.candle(), 0, 1.3); });
@@ -526,9 +556,17 @@ put(U, UY, 67.5, 50.4, Math.PI, P.table(3, 1.2, 0.9, 'wood2')); put(U, UY + 0.9,
 put(U, UY, 59.4, 43.5, -Math.PI / 2, P.chair(), 0, 0.8);
 put(U, UY, W - SW + 0.6, 37.5, Math.PI / 2, P.cab(2.6, 2.8));
 painting(U, 65, UY + 2.2, D - 0.22, Math.PI, 4.2, 2.6, 1);
-painting(U, W - SW + 0.22, UY + 2.4, 47, Math.PI / 2, 3.4, 2, 3);
+painting(U, W - SW + 0.22, UY + 2.4, 41,5, Math.PI / 2, 3.4, 2, 3);
 
 // ===== ĐÈN TRONG TỪNG PHÒNG =====
+  // ===== TỦ ĐỒ ĐỂ TRỐN: mỗi phòng 1 cái (trừ phòng tắm) =====
+const HP = Math.PI / 2;
+[[G, GY, 0.9, 3.5, HP], [G, GY, 0.9, 41, HP], [G, GY, 57, 31.8, -HP], [G, GY, 59, 44, HP],        // hành lang 1, khách, sảnh, kho
+ [U, UY, 20, 11, Math.PI], [U, UY, 49, 7.5, -HP], [U, UY, 68.5, 11, Math.PI], [U, UY, 0.9, 15, HP], // ngủ, bếp, thư viện, hành lang 2
+ [U, UY, 13, 48, -HP], [U, UY, 71, 24, -HP], [U, UY, 59, 48.5, HP]                                    // game, trẻ em, bí mật
+].forEach(function (q) { hideaway(q[0], q[1], q[2], q[3], q[4]); });
+hideaway(U, UY, 14.85, 42.7, HP, 2.2, 1.3, 3.4);    // ban công tây
+hideaway(U, UY, 57.15, 33.5, -HP, 2.2, 1.3, 3.4);   // ban công đông
 lamp(G, CX, F2 - 0.2, 3.2, 3.5, 0xdde4ff, 1.2, 46);      // hành lang 1
 lamp(G, 7, F2 - 0.2, 3.4, 28, 0xffe3b8, 1.2, 36);        // phòng khách
 lamp(G, 65, F2 - 0.2, 3.4, 30, 0xdde4ff, 1.0, 28);       // kho
@@ -586,6 +624,10 @@ addEventListener('keydown', function (e) {
   if (e.code === 'KeyL') { labelsOn = !labelsOn; scene.traverse(function (o) { if (o.userData.label) o.visible = labelsOn; }); }
   if (e.code === 'KeyF') { bright = !bright; amb.intensity = bright ? 0.26 : 0.04; sun.intensity = bright ? 0.45 : 0; hemi.intensity = bright ? 0.25 : 0.03; LT.forEach(function (o) { o.l.visible = bright; }); }
   if (mode === 'fly') {
+    if (e.code === 'KeyB') { fpos.set(CX, 2, 9); yaw = Math.PI; pitch = 0.55; showFloors(1); }          // thay dòng KeyB cũ: nhìn tủ sách
+if (e.code === 'KeyY') { fpos.set(6, F2 + 1.6, 15); yaw = -Math.PI / 2; pitch = 0; showFloors(2); }   // thay dòng KeyY cũ: hành lang 2, nhìn tủ trốn
+if (e.code === 'KeyM') { fpos.set(49, 1.6, 31.8); yaw = -Math.PI / 2; pitch = 0.15; showFloors(1); }  // thêm: tủ trốn ở sảnh
+if (e.code === 'KeyR') { fpos.set(CX - 3, 2.6, FZ0 + 3); yaw = 0; pitch = 0.1; showFloors(3); }       // thêm: tay vịn cầu thang
     if (e.code === 'KeyT') { fpos.set(2, 1.6, 3.5); yaw = -Math.PI / 2; pitch = 0; showFloors(1); }
     if (e.code === 'KeyH') { fpos.set(CX, 1.6, D - 1.5); yaw = 0; pitch = 0.3; showFloors(3); }
     if (e.code === 'KeyB') { fpos.set(CX, 2, 11); yaw = Math.PI; pitch = 0.1; showFloors(1); }
