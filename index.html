@@ -74,8 +74,8 @@ const WG = [
   ['z', GZ, D, SW, [[26, 29]]], ['z', GZ, D, W - SW, [[26, 29]]]
 ];
 const WU = [
-  ['x', 0, W, 0, []], ['x', 0, W, D, []], ['z', 0, D, 0, []], ['z', 0, D, W, []],
-  ['x', 0, W, NZ, [[11, 14], [28, 31], [58, 61]]], ['z', 0, NZ, 26, []], ['z', 0, NZ, 50, []],
+['x', 0, W, -EU, []], ['x', 0, W, D, []], ['z', -EU, D, 0, []], ['z', -EU, D, W, []],
+['x', 0, W, NZ - EU, [[11, 14], [28, 31], [58, 61]]], ['z', -EU, NZ - EU, 26, []], ['z', -EU, NZ - EU, 50, []],
   ['x', 0, SW, HZ, [[9, 12]]], ['x', 0, SW, T1, []], ['x', 0, SW, T2, []],
   ['z', HZ, D, SW, [[HZ + 2.5, HZ + 5.5], [T1 + 2.5, T1 + 5.5], [T2 + 4, T2 + 7]]],
   ['x', W - SW, W, HZ, [[W - 12, W - 9]]],
@@ -510,7 +510,8 @@ function ornate(x1, z1, x2, z2, y) {   // trần 1 phòng: y = mặt phẳng tr�
   }
 }
 // Tầng lầu: mọi phòng + phần trần phủ khoảng thông tầng sảnh, huy chương ngay chỗ đèn chùm
-RU.forEach(function (r) { ornate(r[1], r[2], r[3], r[4], UC); });
+const CEM = M(0x1d1712, 1);   // màu nền ô lõm của trần
+RU.forEach(function (r) { box(CE, (r[1] + r[3]) / 2, UC + 0.1, (r[2] + r[4]) / 2, r[3] - r[1], 0.2, r[4] - r[2], CEM); });
 box(CE, CX, UC + 0.1, (HZ + D) / 2, 2 * HH, 0.2, D - HZ, CEM);
 ornate(CX - HH, HZ, CX + HH, D, UC);
 medal(CE, CX, CHZ, 5.5, UC);
