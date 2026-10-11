@@ -394,31 +394,32 @@ function flight(x0, z0, w, n, base) {
   for (let i = 0; i < n; i++) {
     const top = base + (i + 1) * RISE, cz = z0 - (i + 0.5) * RUN;
     box(B, x0, top / 2, cz, w, top, RUN, i % 2 ? STB : STW);
-    [-1, 1].forEach(function (s) { box(B, x0 + s * (w / 2 - 0.05), top + 0.3, cz, 0.12, 0.6, RUN, RAIL); });
+    [-1, 1].forEach(function (s) { box(B, x0 + s * (w / 2 - 0.05), top + RH / 2, cz, 0.12, RH, RUN, RAIL); box(B, x0 + s * (w / 2 - 0.05), top + RH + 0.06, cz, 0.24, 0.12, RUN, CAP); });
   }
-  [-1, 1].forEach(function (s) {
-    const xx = x0 + s * (w / 2 - 0.05), pts = [], bl = [];
-    for (let i = 0; i <= n; i++) pts.push(new THREE.Vector3(xx, base + i * RISE + 1.05, z0 - i * RUN));
-    for (let i = 0; i < n; i += 2) bl.push([xx, base + (i + 1) * RISE + 0.48, z0 - (i + 0.5) * RUN]);
-    handrail(B, pts); balusters(B, bl);
-    newel(B, xx, base, z0 + 0.15); newel(B, xx, base + n * RISE, z0 - n * RUN - 0.15);
-  });
+  [-1, 1].forEach(function (s) { const xx = x0 + s * (w / 2 - 0.05); newel(B, xx, base, z0 + 0.15); newel(B, xx, base + n * RISE, z0 - n * RUN - 0.15); });
 }
 function arc(cx, cz, r, a0, a1, n, w, base) {
   const da = (a1 - a0) / n, len = r * Math.abs(da) * 1.04;
   for (let i = 0; i < n; i++) {
     const a = a0 + (i + 0.5) * da, top = base + (i + 1) * RISE, ca = Math.cos(a), sa = Math.sin(a);
     box(B, cx + r * ca, top / 2, cz + r * sa, w, top, len, i % 2 ? STB : STW).rotation.y = -a;
-    [-1, 1].forEach(function (s) { const o = r + s * (w / 2 - 0.05); box(B, cx + o * ca, top + 0.3, cz + o * sa, 0.12, 0.6, len, RAIL).rotation.y = -a; });
+    [-1, 1].forEach(function (s) {
+      const o = r + s * (w / 2 - 0.05);
+      box(B, cx + o * ca, top + RH / 2, cz + o * sa, 0.12, RH, len, RAIL).rotation.y = -a;
+      box(B, cx + o * ca, top + RH + 0.06, cz + o * sa, 0.24, 0.12, len, CAP).rotation.y = -a;
+    });
   }
-  [-1, 1].forEach(function (s) {
-    const o = r + s * (w / 2 - 0.05), pts = [], bl = [];
-    for (let i = 0; i <= n; i++) { const a = a0 + i * da; pts.push(new THREE.Vector3(cx + o * Math.cos(a), base + i * RISE + 1.05, cz + o * Math.sin(a))); }
-    for (let i = 0; i < n; i += 2) { const a = a0 + (i + 0.5) * da; bl.push([cx + o * Math.cos(a), base + (i + 1) * RISE + 0.48, cz + o * Math.sin(a)]); }
-    handrail(B, pts); balusters(B, bl);
-    newel(B, cx + o * Math.cos(a1), base + n * RISE, cz + o * Math.sin(a1));
-  });
+  [-1, 1].forEach(function (s) { const o = r + s * (w / 2 - 0.05); newel(B, cx + o * Math.cos(a1), base + n * RISE, cz + o * Math.sin(a1)); });
 }
+flight(CX, FZ0, MW, STEPS, 0);
+box(B, CX, LH / 2, LZ, 2 * LXH, LH, LD, STW);                   // chiếu nghỉ lớn
+arc(CX - LXH, HZ, AR, Math.PI / 2, Math.PI, STEPS, AW, LH);
+arc(CX + LXH, HZ, AR, Math.PI / 2, 0, STEPS, AW, LH);
+rail(B, CX - LXH, LZ - LD / 2, CX + LXH, LZ - LD / 2, LH);
+rail(B, CX - LXH, LZ + LD / 2, CX - MW / 2, LZ + LD / 2, LH); rail(B, CX + MW / 2, LZ + LD / 2, CX + LXH, LZ + LD / 2, LH);
+[-1, 1].forEach(function (s) { newel(B, CX + s * (LXH - 0.2), LH, LZ - LD / 2 + 0.2); newel(B, CX + s * (LXH - 0.2), LH, LZ + LD / 2 - 0.2); });
+label(B, 'CẦU THANG ĐÔI', CX, F2 + 2, LZ, 5);
+
 // ===== ĐÈN CHÙM sảnh: treo vào xà ngang giữa 2 cột =====
 const CHZ = 42;
 [CX - HH, CX + HH].forEach(function (x) { const col = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, UC - F2 + 0.05, 16), STW); col.position.set(x, F2 + (UC - F2) / 2, CHZ); col.castShadow = true; B.add(col); });
