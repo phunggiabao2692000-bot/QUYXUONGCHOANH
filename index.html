@@ -52,15 +52,16 @@ const LZ = FZ0 - STEPS * RUN - LD / 2, LH = F2 / 2;
 const HH = LXH + AR + AW / 2, IN = LXH + AR - AW / 2;
 const T1 = HZ + 8, T2 = HZ + 16, KS = HZ + 17;       // ranh giới: tắm 1 | tắm 2 | game ; trẻ em | bí mật
 const GY = 0.04, UY = F2 + 0.04, UC = F2 + WHU;
-
+const EG = 5, EU = 5;                       // mét mở rộng thêm: EG = hành lang 1 (tầng trệt), EU = hành lang 2 (tầng lầu)
+const CZ1 = (GZ - EG) / 2, CZ2 = (NZ - EU + HZ) / 2;   // tâm hành lang 1 và 2
 // [tên, x1, z1, x2, z2, màu sàn, lát caro?]
 const RG = [
-  ['HÀNH LANG 1', 0, 0, W, GZ, 0x4a4a4a, 0], ['PHÒNG KHÁCH', 0, GZ, SW, D, 0x2a2a2a, 0],
+ ['HÀNH LANG 1', 0, -EG, W, GZ, 0x4a4a4a, 0], ['PHÒNG KHÁCH', 0, GZ, SW, D, 0x2a2a2a, 0],
   ['SẢNH', SW, GZ, W - SW, D, 0x777777, 1], ['PHÒNG KHO', W - SW, GZ, W, D, 0x202020, 0]
 ];
 const RU = [
-  ['PHÒNG NGỦ', 0, 0, 26, NZ, 0x2a2a2a, 0], ['PHÒNG BẾP', 26, 0, 50, NZ, 0x777777, 1],
-  ['THƯ VIỆN', 50, 0, W, NZ, 0x202020, 0], ['HÀNH LANG 2', 0, NZ, W, HZ, 0x3a3a3a, 0],
+ ['PHÒNG NGỦ', 0, -EU, 26, NZ - EU, 0x2a2a2a, 0], ['PHÒNG BẾP', 26, -EU, 50, NZ - EU, 0x777777, 1],
+['THƯ VIỆN', 50, -EU, W, NZ - EU, 0x202020, 0], ['HÀNH LANG 2', 0, NZ - EU, W, HZ, 0x3a3a3a, 0],
   ['PHÒNG TẮM 1', 0, HZ, SW, T1, 0x777777, 1], ['PHÒNG TẮM 2', 0, T1, SW, T2, 0x777777, 1],
   ['PHÒNG GAME', 0, T2, SW, D, 0x1c1c1c, 0],
   ['BAN CÔNG TÂY', SW, HZ, CX - HH, D, 0x333333, 0], ['BAN CÔNG ĐÔNG', CX + HH, HZ, W - SW, D, 0x333333, 0],
@@ -68,7 +69,7 @@ const RU = [
 ];
 // Tường: [hướng, từ, đến, vị trí cố định, [cửa [bắt đầu, kết thúc]]]  ('x' chạy ngang, 'z' chạy dọc; cửa xếp từ nhỏ đến lớn)
 const WG = [
-  ['x', 0, W, 0, []], ['x', 0, W, D, [[CX - 2, CX + 2]]], ['z', 0, D, 0, []], ['z', 0, D, W, []],
+ ['x', 0, W, -EG, []], ['x', 0, W, D, [[CX - 2, CX + 2]]], ['z', -EG, D, 0, []], ['z', -EG, D, W, []],
   ['x', 0, W, GZ, [[5, 8], [CX - 8, CX + 8], [W - 8, W - 5]]],
   ['z', GZ, D, SW, [[26, 29]]], ['z', GZ, D, W - SW, [[26, 29]]]
 ];
