@@ -232,7 +232,8 @@ function painting(p, x, y, z, ry, w, h, k) {
   p.add(g); return g;
 }
 
-function lamp(p, x, ceilY, drop, z, col, inten, dist, flick) {
+// Đèn thả đơn giản (chỉ còn dùng cho phòng bí mật)
+function lampPlain(p, x, ceilY, drop, z, col, inten, dist, flick) {
   const g = new THREE.Group(); g.position.set(x, ceilY - drop, z);
   g.add(mk(0.04, drop, 0.04, MT.bk, 0, drop / 2, 0));
   const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.8, 0.5, 14, 1, true), new THREE.MeshStandardMaterial({ color: 0x151515, side: THREE.DoubleSide, roughness: 0.6 }));
@@ -242,29 +243,68 @@ function lamp(p, x, ceilY, drop, z, col, inten, dist, flick) {
   LT.push({ l: l, base: inten, flick: !!flick }); p.add(g); return l;
 }
 
-const CAND = new THREE.CylinderGeometry(0.1, 0.1, 0.55, 8), FLAME = new THREE.SphereGeometry(0.09, 6, 6), CRYS = new THREE.OctahedronGeometry(0.14);
-function chandelier(p, x, y, z) {
-  const g = new THREE.Group(); g.position.set(x, y, z);
-  g.add(mk(0.1, 2.8, 0.1, MT.bk, 0, 1.4, 0));
-  g.add(mk(0.7, 0.35, 0.7, IRON, 0, 0.1, 0));
-  g.add(mk(0.28, 2.6, 0.28, IRON, 0, -1.3, 0));
-  [[2.7, -0.9, 14], [1.9, -1.7, 10], [1.1, -2.4, 6]].forEach(function (r) {
-    const R = r[0], yy = r[1], n = r[2];
-    const t = new THREE.Mesh(new THREE.TorusGeometry(R, 0.07, 6, 40), IRON); t.rotation.x = Math.PI / 2; t.position.y = yy; g.add(t);
-    for (let s = 0; s < 4; s++) { const th = s * Math.PI / 2, sp = mk(R, 0.05, 0.05, IRON, Math.cos(th) * R / 2, yy, Math.sin(th) * R / 2); sp.rotation.y = -th; g.add(sp); }
-    for (let i = 0; i < n; i++) {
-      const a = i * 2 * Math.PI / n, cx = Math.cos(a) * R, cz = Math.sin(a) * R;
-      const cd = new THREE.Mesh(CAND, MT.wh); cd.position.set(cx, yy + 0.3, cz); g.add(cd);
-      const fl = new THREE.Mesh(FLAME, MT.flame); fl.position.set(cx, yy + 0.62, cz); g.add(fl);
-      const cr = new THREE.Mesh(CRYS, MT.cry); cr.position.set(Math.cos(a + Math.PI / n) * R, yy - 0.35, Math.sin(a + Math.PI / n) * R); cr.scale.y = 2.2; g.add(cr);
+// ===== ĐÈN CHÙM SANG TRỌNG: thân tiện, tay cong, nến, dây chuỗi pha lê, giọt pha lê =====
+const GOLDC = new THREE.MeshStandardMaterial({ color: 0xe0b84a, roughness: 0.28, metalness: 0.45, emissive: 0x4a3508, side: THREE.DoubleSide });
+const FM = {}; function fm(c) { return FM[c] || (FM[c] = new THREE.MeshBasicMaterial({ color: c })); }
+const GGC = {}; function gg(k, f) { return GGC[k] || (GGC[k] = f()); }
+const LPTS = [[0.05, 0.55], [0.3, 0.45], [0.42, 0.28], [0.2, 0.1], [0.14, -0.2], [0.3, -0.5], [0.22, -0.75], [0.14, -1.1], [0.34, -1.4], [0.26, -1.7], [0.13, -2.0], [0.2, -2.3], [0.38, -2.55], [0.2, -2.85], [0.05, -3.15]].map(function (q) { return new THREE.Vector2(q[0], q[1]); });
+const gLathe = new THREE.LatheGeometry(LPTS, 20), gLink = new THREE.TorusGeometry(0.08, 0.022, 6, 12), gCup = new THREE.CylinderGeometry(0.14, 0.09, 0.1, 10),
+  gBob = new THREE.CylinderGeometry(0.19, 0.19, 0.03, 12), gCand = new THREE.CylinderGeometry(0.065, 0.065, 0.5, 8), gFlm = new THREE.SphereGeometry(0.075, 6, 6),
+  gBead = new THREE.SphereGeometry(0.5, 6, 5), gDrop = new THREE.OctahedronGeometry(0.14), gRc = new THREE.TorusGeometry(0.34, 0.06, 6, 16),
+  gCan = new THREE.CylinderGeometry(0.85, 0.18, 0.5, 16), gDisc = new THREE.CylinderGeometry(0.95, 0.95, 0.08, 16);
+// S = tỉ lệ | L = chiều dài xích (theo đơn vị đèn) | tiers = [[bán kính, độ cao, số tay đèn], ...] | lt = [độ sáng, tầm, chập chờn] hoặc null
+function grand(p, x, y, z, S, L, tiers, col, lt) {
+  const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(S);
+  const bk = {}, o = new THREE.Object3D(), fl = fm(col || 0xffd27a);
+  function ins(geo, mat, px, py, pz, sx, sy, sz, ry, rx) {
+    o.position.set(px, py, pz); o.rotation.set(rx || 0, ry || 0, 0); o.scale.set(sx, sy, sz); o.updateMatrix();
+    const k = geo.uuid + mat.uuid;
+    (bk[k] || (bk[k] = { g: geo, m: mat, a: [] })).a.push(o.matrix.clone());
+  }
+  ins(gLathe, GOLDC, 0, 0, 0, 1, 1, 1);                 // thân tiện nhiều đốt
+  ins(gDisc, GOLDC, 0, L - 0.04, 0, 1, 1, 1);           // đế gắn trần
+  ins(gCan, GOLDC, 0, L - 0.3, 0, 1, 1, 1);             // chụp che móc trần
+  const nl = Math.max(0, Math.floor((L - 1.1) / 0.2));
+  for (let i = 0; i < nl; i++) ins(gLink, GOLDC, 0, 0.6 + i * 0.2, 0, 1, 1.9, 1, i % 2 ? Math.PI / 2 : 0);   // mắt xích vàng
+  tiers.forEach(function (t) {
+    const R = t[0], yy = t[1], n = t[2];
+    const arm = gg('arm' + R + '_' + yy, function () { return new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.22, yy - 0.05, 0), new THREE.Vector3(R * 0.35, yy - 0.5, 0), new THREE.Vector3(R * 0.7, yy - 0.55, 0), new THREE.Vector3(R * 0.93, yy - 0.15, 0), new THREE.Vector3(R, yy + 0.18, 0)]), 16, 0.05, 6, false); });
+    ins(gRc, GOLDC, 0, yy, 0, 1, 1, 1, 0, Math.PI / 2);   // vòng vàng quanh thân
+    const tp = [];
+    for (let k = 0; k < n; k++) {
+      const a = k * 2 * Math.PI / n, tx = R * Math.cos(a), tz = R * Math.sin(a);
+      ins(arm, GOLDC, 0, 0, 0, 1, 1, 1, -a);             // tay đèn cong chữ S
+      tp.push([tx, tz]);
+      ins(gCup, GOLDC, tx, yy + 0.2, tz, 1, 1, 1);
+      ins(gBob, GOLDC, tx, yy + 0.27, tz, 1, 1, 1);
+      ins(gCand, MT.wh, tx, yy + 0.55, tz, 1, 1, 1);
+      ins(gFlm, fl, tx, yy + 0.86, tz, 1, 1.8, 1);
+    }
+    for (let k = 0; k < n; k++) {
+      const A = tp[k], Q = tp[(k + 1) % n];
+      for (let j = 1; j <= 5; j++) { const u = j / 6; ins(gBead, MT.cry, A[0] + (Q[0] - A[0]) * u, yy - 0.05 - 0.3 * Math.sin(Math.PI * u), A[1] + (Q[1] - A[1]) * u, 0.1, 0.1, 0.1); }   // dây chuỗi hạt pha lê
+      ins(gDrop, MT.cry, (A[0] + Q[0]) / 2, yy - 0.62, (A[1] + Q[1]) / 2, 1, 2.6, 1);                                                                               // giọt pha lê
     }
   });
-  const fin = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.7, 10), IRON); fin.rotation.x = Math.PI; fin.position.y = -3.0; g.add(fin);
-  const L = new THREE.PointLight(0xffc880, 1.8, 50, 1.5); L.position.y = -1.2; g.add(L);
-  LT.push({ l: L, base: 1.8, flick: true });
+  for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + 0.2; ins(gDrop, MT.cry, Math.cos(a) * 0.5, -3.0, Math.sin(a) * 0.5, 1, 2.2, 1); }
+  ins(gDrop, MT.cry, 0, -3.55, 0, 1.6, 5, 1.6);          // giọt pha lê lớn dưới cùng
+  Object.keys(bk).forEach(function (k) {
+    const e = bk[k], im = new THREE.InstancedMesh(e.g, e.m, e.a.length);
+    e.a.forEach(function (mt, i) { im.setMatrixAt(i, mt); });
+    im.frustumCulled = false; g.add(im);
+  });
+  if (lt) { const l = new THREE.PointLight(col || 0xffc880, lt[0], lt[1], 1.5); l.position.y = -1.2; g.add(l); LT.push({ l: l, base: lt[0], flick: !!lt[2] }); }
   p.add(g); return g;
 }
+function chandelier(p, x, y, z) { return grand(p, x, y, z, 1, 2.8, [[3.2, -0.9, 16], [2.3, -1.8, 12], [1.45, -2.45, 8]], 0xffd27a, [1.8, 50, true]); }
+// Đèn thả trong từng phòng: bản mini sang trọng (phòng bí mật giữ đèn cũ)
+function lamp(p, x, ceilY, drop, z, col, inten, dist, flick) {
+  if (col === 0xb8c4ff) return lampPlain(p, x, ceilY, drop, z, col, inten, dist, flick);
+  const up = ceilY > 12, S = up ? 0.3 : 0.5, d = up ? 1.0 : drop;
+  return grand(p, x, ceilY - d, z, S, d / S, up ? [[2.7, -0.9, 6], [1.7, -1.9, 4]] : [[2.7, -0.9, 8], [1.7, -1.9, 5]], col, [inten, dist, flick]);
+}
 
+// ===== NỘI THẤT =====
 const P = {
   shelf: function (w, h, d) {
     const a = [[-w / 2 + 0.06, 0, 0, 0.12, h, d, 'wood'], [w / 2 - 0.06, 0, 0, 0.12, h, d, 'wood'], [0, h - 0.12, 0, w, 0.12, d, 'wood'], [0, 0, 0, w - 0.2, 0.15, d, 'wood'], [0, 0.15, -d / 2 + 0.05, w - 0.24, h - 0.27, 0.08, bookMat(w, h)]];
@@ -482,7 +522,10 @@ function ornate(x1, z1, x2, z2, y) {
   for (let b = z1 + 0.6; b < z2 - 0.5; b += 0.6) { ci(GB, PLC, x1 + 0.35, y - 0.37, b, 0.4, 0.18, 0.3); ci(GB, PLC, x2 - 0.35, y - 0.37, b, 0.4, 0.18, 0.3); }
   for (let a = x1 + 0.4; a < x2 - 0.3; a += 0.5) { ci(GSL, PLG, a, y - 0.36, z1 + 1.1, 0.2, 0.2, 0.2); ci(GSL, PLG, a, y - 0.36, z2 - 1.1, 0.2, 0.2, 0.2); }
   for (let b = z1 + 0.4; b < z2 - 0.3; b += 0.5) { ci(GSL, PLG, x1 + 1.1, y - 0.36, b, 0.2, 0.2, 0.2); ci(GSL, PLG, x2 - 1.1, y - 0.36, b, 0.2, 0.2, 0.2); }
-  const nx = Math.max(1, Math.round(w / 6)), nz = Math.max(1, Math.round(d / 6)), cx = w / nx, cz = d / nz;   // 6 = cỡ ô (m)
+  for (let a = x1 + 0.5; a < x2 - 0.4; a += 0.45) { ci(GS, PLC, a, y - 0.24, z1 + 0.62, 0.2, 0.28, 0.2); ci(GS, PLC, a, y - 0.24, z2 - 0.62, 0.2, 0.28, 0.2); }   // hàng trứng-phi tiêu
+  for (let b = z1 + 0.5; b < z2 - 0.4; b += 0.45) { ci(GS, PLC, x1 + 0.62, y - 0.24, b, 0.2, 0.28, 0.2); ci(GS, PLC, x2 - 0.62, y - 0.24, b, 0.2, 0.28, 0.2); }
+  [[x1 + 1.7, z1 + 1.7], [x2 - 1.7, z1 + 1.7], [x1 + 1.7, z2 - 1.7], [x2 - 1.7, z2 - 1.7]].forEach(function (c) { rose(c[0], c[1], 0.75, y); });   // hoa hồng 4 góc
+  const nx = Math.max(1, Math.round(w / 6)), nz = Math.max(1, Math.round(d / 6)), cx = w / nx, cz = d / nz;
   for (let i = 1; i < nx; i++) { const x = x1 + i * cx; ci(GB, PLC, x, y - 0.175, mz, 0.5, 0.35, d); ci(GB, PLG, x, y - 0.375, mz, 0.16, 0.05, d); }
   for (let j = 1; j < nz; j++) { const z = z1 + j * cz; ci(GB, PLC, mx, y - 0.175, z, w, 0.35, 0.5); ci(GB, PLG, mx, y - 0.375, z, w, 0.05, 0.16); }
   for (let i = 1; i < nx; i++) for (let j = 1; j < nz; j++) {
@@ -499,6 +542,7 @@ function ornate(x1, z1, x2, z2, y) {
       ci(GB, PLG, x - s2, y - 0.08, z, 0.05, 0.16, 2 * s2); ci(GB, PLG, x + s2, y - 0.08, z, 0.05, 0.16, 2 * s2);
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (c) { ci(GS, PLG, x + c[0] * s, y - 0.12, z + c[1] * s, 0.36, 0.36, 0.36); });
       rose(x, z, s * 0.6, y);
+      if (s > 1.3) for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; ci(GS, PLG, x + Math.cos(a) * s * 0.8, y - 0.1, z + Math.sin(a) * s * 0.8, 0.16, 0.16, 0.16); }   // vòng hạt vàng quanh hoa
     } else rose(x, z, Math.max(0.35, s * 0.9), y);
   }
 }
@@ -510,6 +554,12 @@ RU.forEach(function (r) { const sec = r[0] === 'PHÒNG BÍ MẬT'; PLC = sec ? P
 PLC = PLC_G; PLG = PLG_G;
 ornate(CX - HH, HZ, CX + HH, D, UC);
 medal(CE, CX, CHZ, 5.5, UC);
+// 4 đèn chùm nhỏ vây quanh đèn lớn, mỗi đèn có huy chương trần riêng
+const smallCh = [];
+[[-8.5, -6.5], [8.5, -6.5], [-8.5, 6.5], [8.5, 6.5]].forEach(function (q) {
+  smallCh.push(grand(B, CX + q[0], UC - 1.6, CHZ + q[1], 0.45, 1.6 / 0.45, [[2.7, -0.9, 10], [1.7, -1.8, 6]], 0xffd27a, null));
+  medal(CE, CX + q[0], CHZ + q[1], 2.0, UC);
+});
 flushCeil(CE);
 const GCE = new THREE.Group(); G.add(GCE); GCE.visible = false;
 [RG[0], RG[1], RG[3], [0, SW, GZ, W - SW, HZ], [0, SW, HZ, CX - HH, D], [0, CX + HH, HZ, W - SW, D]].forEach(function (r) { ornate(r[1], r[2], r[3], r[4], F2 - 0.2); });
@@ -668,7 +718,7 @@ lamp(U, 7, UC, 1.2, HZ + 4, 0xffe8bd, 0.8, 18);
 lamp(U, 7, UC, 1.2, T1 + 4, 0xffe8bd, 0.8, 18);
 lamp(U, 7, UC, 1.2, 43, 0xffd9a0, 0.9, 22);
 lamp(U, 65, UC, 1.4, 27, 0xffe6c0, 0.9, 22);
-lamp(U, 65, UC, 1.6, 43.5, 0xb8c4ff, 0.7, 20, true);   // phòng bí mật: giữ ánh xanh lạnh
+lamp(U, 65, UC, 1.6, 43.5, 0xb8c4ff, 0.7, 20, true);   // phòng bí mật: giữ đèn cũ ánh xanh lạnh
 
 // Cửa chính, chìa khóa, pin
 box(G, EXIT[0], DH / 2, EXIT[1], 4, DH, 0.25, M(0x5a2410, 0.6));
@@ -736,10 +786,11 @@ const clock = new THREE.Clock(); let tt = 0;
 (function loop() {
   requestAnimationFrame(loop);
   const dt = Math.min(clock.getDelta(), 0.05); tt += dt;
-  pend.rotation.z = Math.sin(tt * 3) * 0.28;
-  rocker.rotation.x = Math.sin(tt * 1.6) * 0.07;
-  mob.rotation.y += dt * 0.4;
-  chand.rotation.y += dt * 0.08;
+  pend.rotation.z = Math.sin(tt * 3) * 0.28;            // quả lắc đồng hồ
+  rocker.rotation.x = Math.sin(tt * 1.6) * 0.07;        // ghế bập bênh
+  mob.rotation.y += dt * 0.4;                           // chuông trên nôi
+  chand.rotation.y += dt * 0.08;                        // đèn chùm lớn xoay nhẹ
+  smallCh.forEach(function (c, i) { c.rotation.y += dt * (i % 2 ? 0.2 : -0.2); });   // 4 đèn nhỏ xoay ngược chiều nhau
   if (bright) LT.forEach(function (o) { if (o.flick && Math.random() < 0.1) o.l.intensity = o.base * (0.65 + Math.random() * 0.5); });
   if (mode === 'top') {
     const s = h * 0.012;
